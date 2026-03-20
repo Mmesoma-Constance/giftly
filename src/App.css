@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@theme {
+  --font-fraunces: "Fraunces", serif;
+  --font-syne: "Syne", sans-serif;
+}
