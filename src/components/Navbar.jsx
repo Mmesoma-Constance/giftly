@@ -59,7 +59,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           
         <Link
-                to="/generator"
+                to="/generate-gift"
                 className="hidden md:inline-flex items-center gap-2 px-7 py-3 rounded-full 
                 text-white bg-[#C94B38] font-semibold hover:opacity-90 transition-all hover:shadow-glow hover:scale-[1.02]"
               >

@@ -1,11 +1,13 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroGift from "./../assets/images.png";
 
 const Hero = () => {
   return (
-    <section className="relative bg-amber-50 pt-32 pb-20 md:pt-40 md:pb-32 bg-gradient-hero overflow-hidden">
+    <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden" 
+     style={{ background: 'linear-gradient(135deg,rgba(232,97,77,.05),rgba(240,168,48,.05))' }}>
+     
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -18,7 +20,7 @@ const Hero = () => {
               Find the  <span className="text-[#E8614D] ">Perfect</span>  Gift in{" "}
              
                <span className="relative after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-1
-                after:h-[4px] after:bg-gradient-to-r after:from-[#C94B38] after:to-[#EE8070] after:rounded">
+                after:h-1 after:bg-linear-to-r after:from-[#C94B38] after:to-[#EE8070] after:rounded">
     Seconds
   </span>
             </h1>
@@ -26,7 +28,7 @@ const Hero = () => {
               Stop stressing over gift ideas. Giftly uses smart AI logic to suggest thoughtful, personalized gifts for any person, any occasion — within your budget. </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                to="/generator"
+                to="/generate-gift"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full 
                 text-white bg-[#C94B38] font-semibold hover:opacity-90 transition-all hover:shadow-glow hover:scale-[1.02]"
               >
@@ -56,7 +58,7 @@ const Hero = () => {
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
-              className="absolute top-8 -left-4 md:left-0 bg-card rounded-2xl p-3 shadow-lg border border-border/50"
+              className="absolute top-8 bg-white -left-4 md:left-0 bg-card rounded-2xl p-3 shadow-lg border border-border/50"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">👜</div>
@@ -69,7 +71,7 @@ const Hero = () => {
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
-              className="absolute bottom-12 -right-4 md:right-0 bg-card rounded-2xl p-3 shadow-lg border border-border/50"
+              className="absolute bottom-12 bg-white -right-4 md:right-0 bg-card rounded-2xl p-3 shadow-lg border border-border/50"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-lg">⌚</div>

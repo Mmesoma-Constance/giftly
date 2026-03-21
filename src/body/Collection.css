@@ -4,7 +4,7 @@
 }
 
 .animate-feedScroll {
-  animation: feedScroll 12s linear infinite;
+  animation: feedScroll 35s linear infinite;
 }
 
 .hover\:pause-feedScroll:hover {

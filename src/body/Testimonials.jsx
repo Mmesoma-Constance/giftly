@@ -55,7 +55,10 @@ export default function Testimonials() {
   const posKeys = ["left", "center", "right"];
 
   return (
-    <section className="py-24 md:py-32 flex flex-col items-center bg-amber-50 overflow-hidden" id="testimonials">
+    <section className="py-24 md:py-32 flex flex-col items-center overflow-hidden"
+     style={{ background: 'linear-gradient(135deg,rgba(232,97,77,.05),rgba(240,168,48,.05))' }}
+     
+    id="testimonials">
 
       {/* HEADING */}
     
