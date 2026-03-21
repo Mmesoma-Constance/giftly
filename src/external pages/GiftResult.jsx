@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import image1 from "../assets/img1.jpg";
 import image2 from "../assets/sneakers.webp";
@@ -85,7 +85,7 @@ function Toast({ msg, visible }) {
   );
 }
 
-// ── LOADING OVERLAY ──
+// ── LOADING OVERLAY (used only for initial page load) ──
 function LoadingOverlay({ show, label = "Finding your perfect gifts…" }) {
   const steps = [
     { id: "ls1", label: "Analysing your preferences…", icon: "🔍" },
@@ -120,7 +120,7 @@ function LoadingOverlay({ show, label = "Finding your perfect gifts…" }) {
         🎁
       </div>
       <p
-        className="text-[1.3rem] font-black text-[#1C1410] mb-8 text-center px-4"
+        className="text-[1.3rem] font-syne text-[#1C1410] mb-8 text-center px-4"
         style={{ fontFamily: "'Fraunces','Georgia',serif" }}
       >
         {label}
@@ -166,6 +166,102 @@ function LoadingOverlay({ show, label = "Finding your perfect gifts…" }) {
   );
 }
 
+// ── SKELETON CARD — mirrors ProductCard anatomy exactly ──
+function SkeletonCard() {
+  return (
+    <div
+      className="bg-white rounded-[22px] overflow-hidden border-[1.5px] border-[#EDE8E3]
+        shadow-sm flex flex-col"
+    >
+      {/* Image area — 190px, matches card */}
+      <div className="relative h-[190px] flex-shrink-0 overflow-hidden">
+        <div className="skeleton-shimmer w-full h-full" />
+        {/* Badge placeholder top-left */}
+        <div
+          className="absolute top-3 left-3 skeleton-shimmer rounded-full"
+          style={{ width: 80, height: 22 }}
+        />
+        {/* Heart button placeholder top-right */}
+        <div
+          className="absolute top-3 right-3 skeleton-shimmer rounded-full"
+          style={{ width: 36, height: 36 }}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="p-[18px] flex flex-col flex-1 gap-[10px]">
+        {/* Category label — small uppercase strip */}
+        <div className="skeleton-shimmer rounded-full" style={{ width: 70, height: 13 }} />
+
+        {/* Product name — two lines */}
+        <div className="flex flex-col gap-[6px]">
+          <div className="skeleton-shimmer rounded-md" style={{ width: "90%", height: 16 }} />
+          <div className="skeleton-shimmer rounded-md" style={{ width: "65%", height: 16 }} />
+        </div>
+
+        {/* "Why" italic quote block */}
+        <div
+          className="rounded-[10px] border-l-2 border-[#EDE8E3] px-[10px] py-[10px] flex flex-col gap-[6px]"
+          style={{ background: "#F6F3F0" }}
+        >
+          <div className="skeleton-shimmer rounded-md" style={{ width: "100%", height: 12 }} />
+          <div className="skeleton-shimmer rounded-md" style={{ width: "80%", height: 12 }} />
+        </div>
+
+        {/* Source row */}
+        <div className="flex items-center gap-2 pt-2 border-t border-[#F6F3F0]">
+          <div className="skeleton-shimmer rounded-full" style={{ width: 16, height: 16 }} />
+          <div className="skeleton-shimmer rounded-md" style={{ width: 130, height: 12 }} />
+        </div>
+
+        {/* Stars + review count */}
+        <div className="flex items-center gap-2">
+          <div className="skeleton-shimmer rounded-md" style={{ width: 80, height: 13 }} />
+          <div className="skeleton-shimmer rounded-md" style={{ width: 70, height: 12 }} />
+        </div>
+
+        {/* Price + Buy Now row */}
+        <div className="flex items-center justify-between gap-3 mt-auto pt-3 border-t border-[#F6F3F0]">
+          <div className="flex flex-col gap-[5px]">
+            {/* Main price */}
+            <div className="skeleton-shimmer rounded-md" style={{ width: 90, height: 22 }} />
+            {/* Old price + discount badge */}
+            <div className="flex items-center gap-1">
+              <div className="skeleton-shimmer rounded-md" style={{ width: 60, height: 12 }} />
+              <div className="skeleton-shimmer rounded-full" style={{ width: 36, height: 18 }} />
+            </div>
+          </div>
+          {/* Buy Now button */}
+          <div
+            className="skeleton-shimmer rounded-full flex-shrink-0"
+            style={{ width: 100, height: 40 }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SKELETON GROUP — mirrors ProductGroup structure ──
+function SkeletonGroup({ count = 4 }) {
+  return (
+    <div className="mt-12">
+      {/* Section header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="skeleton-shimmer rounded-full" style={{ width: 180, height: 24 }} />
+        <div className="skeleton-shimmer rounded-full" style={{ width: 80, height: 22 }} />
+        <div className="flex-1 h-px bg-[#EDE8E3]" />
+      </div>
+      {/* Card grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        {Array.from({ length: count }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── PRODUCT CARD ──
 function ProductCard({ p, saved, onFav }) {
   const src      = SOURCES[p.source] || SOURCES.amazon;
@@ -191,7 +287,7 @@ function ProductCard({ p, saved, onFav }) {
       <div className="relative overflow-hidden h-[190px] flex-shrink-0">
         {bd && (
           <span
-            className="absolute top-3 left-3 z-10 text-[0.68rem] font-black uppercase
+            className="absolute top-3 left-3 z-10 text-[0.68rem] font-syne uppercase
               tracking-[.06em] px-[10px] py-1 rounded-full"
             style={{ background: bd.bg, color: bd.color }}
           >
@@ -216,14 +312,12 @@ function ProductCard({ p, saved, onFav }) {
 
       {/* Body */}
       <div className="p-[18px] flex flex-col flex-1">
-        <span className="text-[0.7rem] font-black uppercase tracking-[.08em] text-[#E8614D] mb-[6px] block">
+        <span className="text-[0.7rem] font-syne uppercase tracking-[.08em] text-[#E8614D] mb-[6px] block">
           {p.cat.charAt(0).toUpperCase() + p.cat.slice(1)}
         </span>
         <div className="font-bold text-[0.95rem] text-[#1C1410] leading-[1.35] mb-2">
           {p.name}
         </div>
-
-        {/* Why this gift */}
         <div
           className="text-[0.78rem] text-[#9C8B82] leading-[1.5] mb-[10px] px-[10px] py-[7px]
             rounded-[10px] border-l-2 border-[#F0A830] italic flex-shrink-0"
@@ -231,15 +325,12 @@ function ProductCard({ p, saved, onFav }) {
         >
           "{p.why}"
         </div>
-
-        {/* Source */}
         <div className="flex items-center gap-[6px] text-[0.74rem] font-semibold text-[#9C8B82]
           mb-[10px] pt-2 border-t border-[#F6F3F0]">
           <span>{src.icon}</span>
           <span>
             Available on{" "}
-            
-      <a href={`https://${src.url}`}
+            <a href={`https://${src.url}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#5C4A3F] hover:text-[#E8614D] transition-colors"
@@ -248,20 +339,16 @@ function ProductCard({ p, saved, onFav }) {
             </a>
           </span>
         </div>
-
-        {/* Rating */}
         <div className="flex items-center gap-[5px] mb-3">
           <span className="text-[#F0A830] text-[0.8rem] tracking-[1px]">{stars}</span>
           <span className="text-[0.75rem] text-[#9C8B82]">
             ({p.reviews.toLocaleString()} reviews)
           </span>
         </div>
-
-        {/* Price + Buy Now */}
         <div className="flex items-center justify-between gap-3 mt-auto pt-3 border-t border-[#F6F3F0]">
           <div className="flex flex-col">
             <span
-              className="text-[1.2rem] font-black text-[#1C1410] leading-tight"
+              className="text-[1.2rem] font-syne text-[#1C1410] leading-tight"
               style={{ fontFamily: "'Fraunces','Georgia',serif" }}
             >
               ₦{p.price.toLocaleString()}
@@ -271,15 +358,14 @@ function ProductCard({ p, saved, onFav }) {
                 <span className="text-[0.78rem] text-[#CFC4BE] line-through">
                   ₦{p.oldPrice.toLocaleString()}
                 </span>
-                <span className="text-[0.68rem] font-black text-[#7A9E7E] bg-[#7A9E7E]/10
+                <span className="text-[0.68rem] font-syne text-[#7A9E7E] bg-[#7A9E7E]/10
                   px-[6px] py-[1px] rounded-full">
                   -{disc}%
                 </span>
               </div>
             )}
           </div>
-          
-          <a  href={`https://www.${src.url}`}
+          <a href={`https://www.${src.url}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-5 py-2.5 rounded-full font-bold
@@ -305,14 +391,14 @@ function ProductGroup({ title, badge, badgeBg, badgeColor, items, saved, onFav }
     <div className="mt-12">
       <div className="flex items-center gap-4 mb-6">
         <span
-          className="font-black text-[1.25rem] text-[#1C1410] whitespace-nowrap"
+          className="font-syne text-[1.25rem] text-[#1C1410] whitespace-nowrap"
           style={{ fontFamily: "'Fraunces','Georgia',serif" }}
         >
           {title}
         </span>
         {badge && (
           <span
-            className="text-[0.72rem] font-black uppercase tracking-[.06em] px-[10px] py-1 rounded-full"
+            className="text-[0.72rem] font-syne uppercase tracking-[.06em] px-[10px] py-1 rounded-full"
             style={{ background: badgeBg, color: badgeColor }}
           >
             {badge}
@@ -406,25 +492,45 @@ export default function GiftResult() {
     try { return JSON.parse(localStorage.getItem("giftly_saved") || "[]"); }
     catch { return []; }
   });
-  const [saveSearchDone, setSaveSearchDone] = useState(false);
   const [results,        setResults]        = useState(() =>
     filterProducts({ relationship, gender, budget, interests, occasion })
   );
   const [seenIds,        setSeenIds]        = useState(() =>
     filterProducts({ relationship, gender, budget, interests, occasion }).map((p) => p.id)
   );
-  const [loading,        setLoading]        = useState(false);
-  const [loadingLabel,   setLoadingLabel]   = useState("Finding your perfect gifts…");
-  const [isInitialLoad,  setIsInitialLoad]  = useState(true);
-  const [toast,          setToast]          = useState({ msg: "", visible: false });
+  // When the user presses Back, location.key is not "default" and formData is already
+  // populated — skip the loading overlay and render results immediately.
+  const isReturning = !!(formData && Object.keys(formData).length && location.key !== "default");
 
-  // ── NEW: track the active budget so heading updates on Show More ──
-  const [activeBudget,   setActiveBudget]   = useState(budget);
+  const [loading,         setLoading]         = useState(false);
+  const [showMoreLoading, setShowMoreLoading] = useState(false);
+  const [loadingLabel,    setLoadingLabel]    = useState("Finding your perfect gifts…");
+  const [isInitialLoad,   setIsInitialLoad]   = useState(!isReturning);
+  const [toast,           setToast]           = useState({ msg: "", visible: false });
+  const [activeBudget,    setActiveBudget]    = useState(budget);
 
-  const toastTimer = useRef(null);
+  const [saveState, setSaveState] = useState(() => {
+    try {
+      const heading = `Perfect gifts for your ${
+        relationship ? cap(relationship.replace("-", " ")) : "them"
+      } under ₦${Number(budget).toLocaleString()}`;
+      const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
+      return searches.some((s) => s.heading === heading) ? "saved" : "idle";
+    } catch {
+      return "idle";
+    }
+  });
 
-  // ── Initial loading on mount ──
+  const toastTimer    = useRef(null);
+  const unsaveTimer   = useRef(null);
+
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
+  // Only show the loading overlay on a genuine fresh arrival (not back navigation)
+  useEffect(() => {
+    if (isReturning) return;
     setLoading(true);
     setLoadingLabel("Finding your perfect gifts…");
     const t = setTimeout(() => {
@@ -434,7 +540,13 @@ export default function GiftResult() {
     return () => clearTimeout(t);
   }, []);
 
-  // ── Toast helper ──
+  useEffect(() => {
+    return () => {
+      clearTimeout(toastTimer.current);
+      clearTimeout(unsaveTimer.current);
+    };
+  }, []);
+
   const showToast = useCallback((msg) => {
     setToast({ msg, visible: true });
     clearTimeout(toastTimer.current);
@@ -444,7 +556,6 @@ export default function GiftResult() {
     );
   }, []);
 
-  // ── Fav toggle ──
   const handleFav = (id) => {
     setSaved((prev) => {
       const next = prev.includes(id)
@@ -456,27 +567,55 @@ export default function GiftResult() {
     });
   };
 
-  // ── Save search ──
+  const heading = `Perfect gifts for your ${
+    relationship ? cap(relationship.replace("-", " ")) : "them"
+  } under ₦${Number(activeBudget).toLocaleString()}`;
+
   const handleSaveSearch = () => {
-    const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
-    const heading  = `Perfect gifts for your ${cap((relationship || "them").replace("-", " "))} under ₦${Number(activeBudget).toLocaleString()}`;
-    const entry    = { id: Date.now(), heading, formData, ts: Date.now() };
-    if (!searches.some((s) => s.heading === heading)) {
-      searches.unshift(entry);
-      localStorage.setItem("giftly_saved_searches", JSON.stringify(searches.slice(0, 20)));
+    if (saveState === "idle") {
+      const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
+      const entry    = { id: Date.now(), heading, formData, ts: Date.now() };
+      if (!searches.some((s) => s.heading === heading)) {
+        searches.unshift(entry);
+        localStorage.setItem("giftly_saved_searches", JSON.stringify(searches.slice(0, 20)));
+      }
+      setSaveState("saved");
+      showToast("🔖 Search saved!");
+      return;
     }
-    setSaveSearchDone(true);
-    showToast("🔖 Search saved!");
-    setTimeout(() => setSaveSearchDone(false), 2200);
+    if (saveState === "saved") {
+      setSaveState("confirming");
+      clearTimeout(unsaveTimer.current);
+      unsaveTimer.current = setTimeout(() => { setSaveState("saved"); }, 4000);
+      return;
+    }
+    if (saveState === "confirming") {
+      clearTimeout(unsaveTimer.current);
+      const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
+      const updated  = searches.filter((s) => s.heading !== heading);
+      localStorage.setItem("giftly_saved_searches", JSON.stringify(updated));
+      setSaveState("idle");
+      showToast("Search removed");
+    }
   };
 
-  // ── Show More Ideas ──
+  const saveButtonConfig = {
+    idle:       { label: "🔖 Save This Search", bg: "#1C1410", color: "white" },
+    saved:      { label: "✅ Saved!",            bg: "#7A9E7E", color: "white" },
+    confirming: { label: "❌ Unsave Search?",    bg: "#E8614D", color: "white" },
+  }[saveState];
+
+  // ── Show More Ideas — now uses skeleton instead of full-page overlay ──
   const handleShowMore = () => {
-    setLoading(true);
-    setLoadingLabel("Finding more ideas…");
+    setShowMoreLoading(true);
+    setCatFilter("all");
+    // New search = reset save state entirely
+    setSaveState("idle");
+    clearTimeout(unsaveTimer.current);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     setTimeout(() => {
-      // Pick a noticeably different budget each time
       const budgetVariants = [
         Math.round(budget * 0.5),
         Math.round(budget * 0.6),
@@ -484,14 +623,11 @@ export default function GiftResult() {
         Math.round(budget * 1.2),
         Math.round(budget * 1.5),
       ];
-      // Remove the currently active budget from options so it always changes
       const options      = budgetVariants.filter((b) => b !== activeBudget);
       const variedBudget = options[Math.floor(Math.random() * options.length)];
 
-      // Update the heading budget
       setActiveBudget(variedBudget);
 
-      // Get fresh results excluding already-seen items
       let fresh = filterProducts({
         relationship,
         gender,
@@ -501,7 +637,6 @@ export default function GiftResult() {
         excludeIds: seenIds,
       });
 
-      // If pool is too small, reset seen list and reshuffle at the new budget
       if (fresh.length < 3) {
         fresh = filterProducts({
           relationship,
@@ -524,23 +659,19 @@ export default function GiftResult() {
       } catch (_) {}
 
       setResults(fresh);
-      setCatFilter("all");
-      setLoading(false);
-      window.scrollTo({ top: 300, behavior: "smooth" });
-    }, 2400);
+      setShowMoreLoading(false);
+    }, 2000);
   };
 
-  const filtered  = catFilter === "all" ? results : results.filter((p) => p.cat === catFilter);
-  const relLabel  = relationship ? cap(relationship.replace("-", " ")) : "them";
-
-  // ── Uses activeBudget so heading updates on every Show More click ──
-  const heading   = `Perfect gifts for your ${relLabel} under ₦${Number(activeBudget).toLocaleString()}`;
+  const filtered = catFilter === "all" ? results : results.filter((p) => p.cat === catFilter);
+  const relLabel = relationship ? cap(relationship.replace("-", " ")) : "them";
 
   return (
     <div
       className="min-h-screen mt-20"
       style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}
     >
+      {/* Initial page-load overlay only */}
       <LoadingOverlay show={loading} label={loadingLabel} />
       <Toast msg={toast.msg} visible={toast.visible} />
 
@@ -548,25 +679,22 @@ export default function GiftResult() {
       <div className="bg-white px-5 pt-10 pb-0 border-b border-[#EDE8E3]">
         <div className="max-w-[1320px] mx-auto">
 
-          {/* Badge */}
           <div
             className="inline-flex items-center gap-2 px-[14px] py-[6px] rounded-full
               font-bold text-[0.78rem] mb-4"
             style={{ background: "rgba(232,97,77,.08)", color: "#E8614D" }}
           >
-            🎁 {results.length} personalized suggestions under ₦{Number(activeBudget).toLocaleString()}
+            {results.length} personalized suggestions
           </div>
 
-          {/* Heading — uses activeBudget */}
           <h1
-            className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-black leading-[1.12]
+            className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-syne leading-[1.12]
               tracking-[-0.03em] text-[#1C1410] mb-[10px]"
             style={{ fontFamily: "'Fraunces','Georgia',serif" }}
           >
             {heading}
           </h1>
 
-          {/* Sub */}
           <p className="text-[0.95rem] text-[#5C4A3F] mb-6">
             Based on your preferences, here are thoughtful ideas for your {relLabel} 💖{" "}
             <span className="text-[#E8614D] font-semibold">
@@ -576,14 +704,15 @@ export default function GiftResult() {
 
           {/* Controls row */}
           <div className="flex items-center justify-between flex-wrap gap-3 pb-6 border-b border-[#F6F3F0]">
-            {/* Category tabs */}
             <div className="flex gap-2 overflow-x-auto flex-wrap">
               {CATS.map(([val, label]) => (
                 <button
                   key={val}
                   onClick={() => setCatFilter(val)}
+                  disabled={showMoreLoading}
                   className="px-[18px] py-[9px] rounded-full font-bold cursor-pointer
-                    text-[0.85rem] transition-all duration-200 whitespace-nowrap border-[1.5px]"
+                    text-[0.85rem] transition-all duration-200 whitespace-nowrap border-[1.5px]
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     borderColor: catFilter === val ? "#E8614D" : "#EDE8E3",
                     background:  catFilter === val ? "#E8614D" : "transparent",
@@ -596,20 +725,22 @@ export default function GiftResult() {
               ))}
             </div>
 
-            {/* Action buttons */}
             <div className="flex gap-2 flex-wrap">
+              {/* Show More Ideas */}
               <button
                 onClick={handleShowMore}
-                disabled={loading}
+                disabled={showMoreLoading || loading}
                 className="flex items-center gap-2 px-[18px] py-[9px] rounded-full font-bold
                   text-[0.82rem] border-none cursor-pointer transition-all duration-200
                   text-[#1C1410] disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
-                  background: loading ? "#EDE8E3" : "linear-gradient(135deg,#F0A830,#f5c060)",
+                  background: (showMoreLoading || loading)
+                    ? "#EDE8E3"
+                    : "linear-gradient(135deg,#F0A830,#f5c060)",
                   fontFamily: "'Syne',sans-serif",
                 }}
               >
-                {loading ? (
+                {showMoreLoading ? (
                   <>
                     <span
                       className="w-3.5 h-3.5 rounded-full border-2 border-[#1C1410]/30
@@ -623,17 +754,21 @@ export default function GiftResult() {
                 )}
               </button>
 
+              {/* Save / Unsave Search */}
               <button
                 onClick={handleSaveSearch}
-                disabled={saveSearchDone}
                 className="px-[18px] py-[9px] rounded-full font-bold text-[0.82rem]
-                  border-none cursor-pointer transition-all duration-200 text-white"
+                  border-none cursor-pointer transition-all duration-200"
                 style={{
-                  background: saveSearchDone ? "#7A9E7E" : "#1C1410",
+                  background: saveButtonConfig.bg,
+                  color:      saveButtonConfig.color,
                   fontFamily: "'Syne',sans-serif",
+                  animation: saveState === "confirming"
+                    ? "savePulse 1s ease-in-out infinite"
+                    : "none",
                 }}
               >
-                {saveSearchDone ? "✅ Saved!" : "🔖 Save This Search"}
+                {saveButtonConfig.label}
               </button>
             </div>
           </div>
@@ -642,60 +777,115 @@ export default function GiftResult() {
 
       {/* ── Results body ── */}
       <div className="max-w-[1320px] mx-auto px-5 pb-20">
-        {!isInitialLoad && !filtered.length ? (
-          <div className="text-center py-20">
-            <span className="text-[4.5rem] block mb-6">😅</span>
-            <h3
-              className="text-[1.6rem] font-black text-[#1C1410] mb-3"
-              style={{ fontFamily: "'Fraunces','Georgia',serif" }}
+
+        {/* ── SKELETON STATE — shown while Show More is loading ── */}
+        {showMoreLoading && (
+          <AnimatePresence>
+            <motion.div
+              key="skeleton-groups"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
             >
-              No perfect match found
-            </h3>
-            <p className="text-[#5C4A3F] mb-8">
-              Try increasing your budget or adjusting your filters.
-            </p>
-            <button
-              onClick={() => navigate("/generate-gift")}
-              className="px-7 py-3.5 rounded-full font-bold text-white text-[0.95rem]
-                border-none cursor-pointer hover:opacity-90 transition-all duration-200"
-              style={{
-                background: "linear-gradient(135deg,#E8614D,#c94a38)",
-                boxShadow:  "0 6px 24px rgba(232,97,77,.32)",
-                fontFamily: "'Syne',sans-serif",
-              }}
-            >
-              Refine Search 🎁
-            </button>
-          </div>
-        ) : !isInitialLoad && catFilter !== "all" ? (
-          <ProductGroup
-            title={`${CATS.find((c) => c[0] === catFilter)?.[1] || ""} Gifts`}
-            items={filtered}
-            saved={saved}
-            onFav={handleFav}
-          />
-        ) : !isInitialLoad ? (
-          buildGroups(filtered).map((g) => (
-            <ProductGroup
-              key={g.title}
-              title={g.title}
-              badge={g.badge}
-              badgeBg={g.badgeBg}
-              badgeColor={g.badgeColor}
-              items={g.items}
-              saved={saved}
-              onFav={handleFav}
-            />
-          ))
-        ) : null}
+              <SkeletonGroup count={4} />
+              <SkeletonGroup count={4} />
+              <SkeletonGroup count={4} />
+            </motion.div>
+          </AnimatePresence>
+        )}
+
+        {/* ── REAL RESULTS — fades in when skeleton is done ── */}
+        {!showMoreLoading && (
+          <>
+            {!isInitialLoad && !filtered.length ? (
+              <div className="text-center py-20">
+                <span className="text-[4.5rem] block mb-6">😅</span>
+                <h3
+                  className="text-[1.6rem] font-syne text-[#1C1410] mb-3"
+                  style={{ fontFamily: "'Fraunces','Georgia',serif" }}
+                >
+                  No perfect match found
+                </h3>
+                <p className="text-[#5C4A3F] mb-8">
+                  Try increasing your budget or adjusting your filters.
+                </p>
+                <button
+                  onClick={() => navigate("/generate-gift")}
+                  className="px-7 py-3.5 rounded-full font-bold text-white text-[0.95rem]
+                    border-none cursor-pointer hover:opacity-90 transition-all duration-200"
+                  style={{
+                    background: "linear-gradient(135deg,#E8614D,#c94a38)",
+                    boxShadow:  "0 6px 24px rgba(232,97,77,.32)",
+                    fontFamily: "'Syne',sans-serif",
+                  }}
+                >
+                  Refine Search 🎁
+                </button>
+              </div>
+            ) : !isInitialLoad && catFilter !== "all" ? (
+              <ProductGroup
+                title={`${CATS.find((c) => c[0] === catFilter)?.[1] || ""} Gifts`}
+                items={filtered}
+                saved={saved}
+                onFav={handleFav}
+              />
+            ) : !isInitialLoad ? (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={results.map(r => r.id).join("-")}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                >
+                  {buildGroups(filtered).map((g) => (
+                    <ProductGroup
+                      key={g.title}
+                      title={g.title}
+                      badge={g.badge}
+                      badgeBg={g.badgeBg}
+                      badgeColor={g.badgeColor}
+                      items={g.items}
+                      saved={saved}
+                      onFav={handleFav}
+                    />
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            ) : null}
+          </>
+        )}
       </div>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Syne:wght@500;700;800;900&display=swap');
+
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes giftBounce {
           0%,100% { transform: translateY(0) rotate(-5deg); }
           50%      { transform: translateY(-18px) rotate(5deg); }
+        }
+        @keyframes savePulse {
+          0%,100% { opacity: 1; transform: scale(1); }
+          50%      { opacity: 0.8; transform: scale(0.97); }
+        }
+
+        /* ── Skeleton shimmer ──────────────────────────────────── */
+        @keyframes skeletonShimmer {
+          0%   { background-position: -600px 0; }
+          100% { background-position:  600px 0; }
+        }
+
+        .skeleton-shimmer {
+          background: linear-gradient(
+            90deg,
+            #EDE8E3 0%,
+            #F6F3F0 40%,
+            #EDE8E3 80%
+          );
+          background-size: 600px 100%;
+          animation: skeletonShimmer 1.6s ease-in-out infinite;
+          border-radius: 8px;
         }
       `}</style>
     </div>
