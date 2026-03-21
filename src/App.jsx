@@ -11,9 +11,9 @@ import Footer from './components/Footer'
 import Hero from './components/Hero'
 import Navbar from './components/Navbar'
 
-// NEW PAGE
-// import Explore from './pages/Explore'; // create this file
 import GenerateGift from './external pages/GenerateGift';
+// import ResultsPage from './external pages/ResultsPage';
+import GiftResult from './external pages/GiftResult';
 
 function App() {
   return (
@@ -34,8 +34,11 @@ function App() {
           </>
         } />
 
-        {/* New Page */}
+        {/* Generate Gift Page */}
         <Route path="/generate-gift" element={<GenerateGift />} />
+
+        {/* Results Page */}
+        <Route path="/result" element={<GiftResult />} />
       </Routes>
 
       <Footer />
