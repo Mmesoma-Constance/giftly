@@ -16,7 +16,7 @@ const BUDGET_MAX = 100000;
 const BUDGET_DEFAULT = 20000;
 
 function formatNaira(val) {
-  return "₦" + Number(val).toLocaleString("en-NG");
+  return "$" + Number(val).toLocaleString("en-NG");
 }
 function sliderPercent(val) {
   return ((val - BUDGET_MIN) / (BUDGET_MAX - BUDGET_MIN)) * 100;
@@ -216,7 +216,7 @@ export default function GenerateGift() {
                   background:"linear-gradient(135deg,#F0A830,#E8614D)",
                   boxShadow:"0 4px 14px rgba(240,168,48,.35)",
                 }}>
-                Surprise Me
+                Surprise Me 🎲
               </button>
             </div>
 
