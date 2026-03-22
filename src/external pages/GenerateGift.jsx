@@ -53,6 +53,8 @@ export default function GenerateGift() {
   }
   function handleSubmit() {
     if (!age || !gender || !relationship || !budget) return;
+    // Signal to GiftResult that this is a fresh submission (not back navigation)
+    sessionStorage.removeItem("giftly_result_visited");
     navigate("/result", {
       state: { age, gender, relationship, occasion, budget, interests },
     });

@@ -63,6 +63,17 @@ const CATS = [
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+const OCCASION_LABELS = {
+  birthday:    "Birthday",
+  anniversary: "Anniversary",
+  valentine:   "Valentine's",
+  christmas:   "Christmas",
+  graduation:  "Graduation",
+  wedding:     "Wedding",
+  "just-because": "Just Because",
+};
+const fmtOccasion = (o) => OCCASION_LABELS[o] || cap(o.replace("-", " "));
+
 // ── TOAST ──
 function Toast({ msg, visible }) {
   return (
@@ -85,86 +96,223 @@ function Toast({ msg, visible }) {
   );
 }
 
-// ── LOADING OVERLAY (used only for initial page load) ──
-function LoadingOverlay({ show, label = "Finding your perfect gifts…" }) {
-  const steps = [
-    { id: "ls1", label: "Analysing your preferences…", icon: "🔍" },
-    { id: "ls2", label: "Matching the right gifts…",   icon: "🎯" },
-    { id: "ls3", label: "Ranking by relevance…",       icon: "✨" },
-    { id: "ls4", label: "Almost ready for you…",       icon: "🎁" },
-  ];
-  const [activeStep, setActiveStep] = useState(-1);
+
+// ── LOADING OVERLAY — elegant & minimal ──────────────────────────────────────
+const LOAD_PHRASES = [
+  "Reading between the lines…",
+  "Finding something they'll love…",
+  "Almost ready for you…",
+];
+
+function GiftLoadingOverlay({ show }) {
+  const [visible,    setVisible]    = useState(show);
+  const [bgIn,       setBgIn]       = useState(false);
+  const [lineDrawn,  setLineDrawn]  = useState(false);
+  const [dotVisible, setDotVisible] = useState(false);
+  const [phraseIdx,  setPhraseIdx]  = useState(0);
+  const [wordIdx,    setWordIdx]    = useState(0);
+  const [barWidth,   setBarWidth]   = useState(0);
 
   useEffect(() => {
-    if (!show) { setActiveStep(-1); return; }
-    setActiveStep(0);
-    let i = 0;
-    const iv = setInterval(() => {
-      i++;
-      setActiveStep(i < steps.length ? i : steps.length);
-    }, 520);
-    return () => clearInterval(iv);
+    if (!show) {
+      setVisible(false); setBgIn(false); setLineDrawn(false);
+      setDotVisible(false); setPhraseIdx(0); setWordIdx(0); setBarWidth(0);
+      return;
+    }
+
+    setVisible(true);
+    const t1 = setTimeout(() => setBgIn(true), 30);
+    const t2 = setTimeout(() => setLineDrawn(true), 400);
+    const t3 = setTimeout(() => setDotVisible(true), 900);
+
+    // Cycle through phrases
+    let p = 0;
+    const phraseTimer = setInterval(() => {
+      p = (p + 1) % LOAD_PHRASES.length;
+      setPhraseIdx(p);
+      setWordIdx(0);
+    }, 1000);
+
+    // Progress bar
+    let w = 0;
+    const barTimer = setInterval(() => {
+      w = Math.min(w + 1.8 + Math.random() * 1.2, 92);
+      setBarWidth(w);
+    }, 55);
+
+    return () => {
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      clearInterval(phraseTimer); clearInterval(barTimer);
+    };
   }, [show]);
 
-  if (!show) return null;
+  // Word-by-word reveal for current phrase
+  const phrase = LOAD_PHRASES[phraseIdx];
+  const words  = phrase.split(" ");
+  useEffect(() => {
+    if (!visible) return;
+    setWordIdx(0);
+    let w = 0;
+    const iv = setInterval(() => {
+      w++;
+      setWordIdx(w);
+      if (w >= words.length) clearInterval(iv);
+    }, 110);
+    return () => clearInterval(iv);
+  }, [phraseIdx, visible]);
+
+  if (!visible) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[9900] flex flex-col items-center justify-center"
-      style={{ background: "rgba(250,247,242,.97)", backdropFilter: "blur(16px)" }}
+      className="fixed inset-0 z-[9950] flex flex-col items-center justify-center"
+      style={{
+        background: bgIn
+          ? "linear-gradient(135deg, rgba(232,97,77,.05), rgba(240,168,48,.05)), #FAF7F2"
+          : "rgba(250,247,242,0)",
+        transition: "background 0.5s ease",
+      }}
     >
-      <div
-        className="text-[5rem] mb-10"
-        style={{ animation: "giftBounce 1.4s ease-in-out infinite" }}
-      >
-        🎁
+
+      {/* ── Icon: SVG ribbon/gift tag that draws itself ── */}
+      <div style={{ position: "relative", width: 72, height: 72, marginBottom: 36 }}>
+        <svg
+          viewBox="0 0 72 72"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ width: 72, height: 72 }}
+        >
+          {/* Gift box body */}
+          <rect
+            x="10" y="32" width="52" height="34" rx="4"
+            stroke="#E8614D" strokeWidth="2.2" fill="none"
+            strokeDasharray="172" strokeDashoffset="172"
+            style={{
+              transition: lineDrawn ? "stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1)" : "none",
+              strokeDashoffset: lineDrawn ? 0 : 172,
+            }}
+          />
+          {/* Lid */}
+          <rect
+            x="6" y="22" width="60" height="12" rx="3"
+            stroke="#F0A830" strokeWidth="2.2" fill="none"
+            strokeDasharray="148" strokeDashoffset="148"
+            style={{
+              transition: lineDrawn ? "stroke-dashoffset 0.7s 0.2s cubic-bezier(.4,0,.2,1)" : "none",
+              strokeDashoffset: lineDrawn ? 0 : 148,
+            }}
+          />
+          {/* Vertical ribbon */}
+          <line
+            x1="36" y1="22" x2="36" y2="66"
+            stroke="#F0A830" strokeWidth="2.2" strokeLinecap="round"
+            strokeDasharray="44" strokeDashoffset="44"
+            style={{
+              transition: lineDrawn ? "stroke-dashoffset 0.4s 0.6s ease" : "none",
+              strokeDashoffset: lineDrawn ? 0 : 44,
+            }}
+          />
+          {/* Horizontal ribbon */}
+          <line
+            x1="10" y1="44" x2="62" y2="44"
+            stroke="#F0A830" strokeWidth="2.2" strokeLinecap="round"
+            strokeDasharray="52" strokeDashoffset="52"
+            style={{
+              transition: lineDrawn ? "stroke-dashoffset 0.4s 0.65s ease" : "none",
+              strokeDashoffset: lineDrawn ? 0 : 52,
+            }}
+          />
+          {/* Bow left loop */}
+          <path
+            d="M36 22 C28 14 14 14 18 22"
+            stroke="#E8614D" strokeWidth="2.2" fill="none" strokeLinecap="round"
+            strokeDasharray="32" strokeDashoffset="32"
+            style={{
+              transition: lineDrawn ? "stroke-dashoffset 0.45s 0.8s ease" : "none",
+              strokeDashoffset: lineDrawn ? 0 : 32,
+            }}
+          />
+          {/* Bow right loop */}
+          <path
+            d="M36 22 C44 14 58 14 54 22"
+            stroke="#E8614D" strokeWidth="2.2" fill="none" strokeLinecap="round"
+            strokeDasharray="32" strokeDashoffset="32"
+            style={{
+              transition: lineDrawn ? "stroke-dashoffset 0.45s 0.85s ease" : "none",
+              strokeDashoffset: lineDrawn ? 0 : 32,
+            }}
+          />
+          {/* Centre dot — appears last */}
+          <circle
+            cx="36" cy="22" r="3.5"
+            fill={dotVisible ? "#F0A830" : "transparent"}
+            style={{ transition: "fill 0.3s ease" }}
+          />
+        </svg>
       </div>
-      <p
-        className="text-[1.3rem] font-syne text-[#1C1410] mb-8 text-center px-4"
-        style={{ fontFamily: "'Fraunces','Georgia',serif" }}
-      >
-        {label}
+
+      {/* ── Word-by-word phrase ── */}
+      <div style={{
+        minHeight: 36,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 6, flexWrap: "wrap", marginBottom: 32,
+        padding: "0 24px", textAlign: "center",
+      }}>
+        {words.map((word, i) => (
+          <span
+            key={phraseIdx + "-" + i}
+            style={{
+              fontFamily: "'Fraunces','Georgia',serif",
+              fontSize: "clamp(1.1rem, 3vw, 1.4rem)",
+              fontWeight: 700,
+              color: i === words.length - 1 ? "#E8614D" : "#1C1410",
+              letterSpacing: "-0.01em",
+              opacity: i < wordIdx ? 1 : 0,
+              transform: i < wordIdx ? "translateY(0)" : "translateY(8px)",
+              transition: `opacity 0.25s ease, transform 0.25s ease`,
+              display: "inline-block",
+            }}
+          >
+            {word}
+          </span>
+        ))}
+      </div>
+
+      {/* ── Progress bar ── */}
+      <div style={{
+        width: "min(260px, 70vw)",
+        height: 2,
+        background: "rgba(28,20,16,0.10)",
+        borderRadius: 99,
+        overflow: "hidden",
+      }}>
+        <div style={{
+          height: "100%",
+          width: `${barWidth}%`,
+          borderRadius: 99,
+          background: "linear-gradient(90deg, #E8614D, #F0A830)",
+          transition: "width 0.12s linear",
+          boxShadow: "0 0 8px rgba(240,168,48,0.5)",
+        }} />
+      </div>
+
+      {/* ── Brand mark ── */}
+      <p style={{
+        marginTop: 28,
+        fontSize: "0.65rem",
+        color: "rgba(28,20,16,0.25)",
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+        fontFamily: "'Syne',sans-serif",
+        fontWeight: 700,
+      }}>
+        Giftly ✦
       </p>
-      <div className="flex flex-col gap-3 w-[280px]">
-        {steps.map((s, i) => {
-          const isActive = activeStep === i;
-          const isDone   = activeStep > i;
-          return (
-            <div
-              key={s.id}
-              className="flex items-center gap-[14px] px-[18px] py-[14px] rounded-2xl bg-white text-[0.92rem] font-semibold"
-              style={{
-                boxShadow: "0 2px 12px rgba(28,20,16,.07)",
-                opacity:   isActive || isDone ? 1 : 0.35,
-                transform: isActive ? "translateX(6px)" : "translateX(0)",
-                transition: "all .4s ease",
-                color: isActive ? "#1C1410" : isDone ? "#7A9E7E" : "#9C8B82",
-              }}
-            >
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-[0.85rem] flex-shrink-0"
-                style={{
-                  background: isDone ? "#7A9E7E" : isActive ? "#E8614D" : "#F6F3F0",
-                  animation:  isActive ? "spin .8s linear infinite" : "none",
-                }}
-              >
-                {isDone ? "✓" : s.icon}
-              </div>
-              <span>{s.label}</span>
-            </div>
-          );
-        })}
-      </div>
-      <style>{`
-        @keyframes giftBounce {
-          0%,100% { transform: translateY(0) rotate(-5deg); }
-          50%      { transform: translateY(-18px) rotate(5deg); }
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 }
+// ─────────────────────────────────────────────────────────────────────────────
+
 
 // ── SKELETON CARD — mirrors ProductCard anatomy exactly ──
 function SkeletonCard() {
@@ -498,20 +646,25 @@ export default function GiftResult() {
   const [seenIds,        setSeenIds]        = useState(() =>
     filterProducts({ relationship, gender, budget, interests, occasion }).map((p) => p.id)
   );
-  // When the user presses Back, location.key is not "default" and formData is already
-  // populated — skip the loading overlay and render results immediately.
-  const isReturning = !!(formData && Object.keys(formData).length && location.key !== "default");
 
-  const [loading,         setLoading]         = useState(false);
+  // "default" is React Router's key for the very first history entry.
+  // Any navigation (including Back) gets a unique key — but a fresh form
+  // submit also gets a unique key. The real signal is: if we arrived via
+  // Back, the page was already in the history stack, so location.key won't
+  // be "default" BUT formData will already be populated. We use a sessionStorage
+  // flag set by GenerateGift on submit to distinguish "fresh submit" from "back".
+  const isReturning = sessionStorage.getItem("giftly_result_visited") === "true";
+
+  const [loading,         setLoading]         = useState(!isReturning);
   const [showMoreLoading, setShowMoreLoading] = useState(false);
-  const [loadingLabel,    setLoadingLabel]    = useState("Finding your perfect gifts…");
   const [isInitialLoad,   setIsInitialLoad]   = useState(!isReturning);
   const [toast,           setToast]           = useState({ msg: "", visible: false });
   const [activeBudget,    setActiveBudget]    = useState(budget);
 
   const [saveState, setSaveState] = useState(() => {
     try {
-      const heading = `Perfect gifts for your ${
+      const occasionLabel = occasion ? fmtOccasion(occasion) + " " : "";
+      const heading = `Perfect ${occasionLabel}gifts for your ${
         relationship ? cap(relationship.replace("-", " ")) : "them"
       } under ₦${Number(budget).toLocaleString()}`;
       const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
@@ -528,15 +681,16 @@ export default function GiftResult() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, []);
 
-  // Only show the loading overlay on a genuine fresh arrival (not back navigation)
+  // Only fire the cinematic overlay on a fresh form submission
   useEffect(() => {
-    if (isReturning) return;
+    if (isReturning) return; // back navigation — show results instantly
+    // Mark as visited so Back nav skips the overlay
+    sessionStorage.setItem("giftly_result_visited", "true");
     setLoading(true);
-    setLoadingLabel("Finding your perfect gifts…");
     const t = setTimeout(() => {
       setLoading(false);
       setIsInitialLoad(false);
-    }, 2400);
+    }, 3200);
     return () => clearTimeout(t);
   }, []);
 
@@ -567,7 +721,8 @@ export default function GiftResult() {
     });
   };
 
-  const heading = `Perfect gifts for your ${
+  const occasionLabel = occasion ? fmtOccasion(occasion) + " " : "";
+  const heading = `Perfect ${occasionLabel}gifts for your ${
     relationship ? cap(relationship.replace("-", " ")) : "them"
   } under ₦${Number(activeBudget).toLocaleString()}`;
 
@@ -671,8 +826,8 @@ export default function GiftResult() {
       className="min-h-screen mt-20"
       style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}
     >
-      {/* Initial page-load overlay only */}
-      <LoadingOverlay show={loading} label={loadingLabel} />
+      {/* Cinematic overlay — only on fresh form submission */}
+      <GiftLoadingOverlay show={loading} />
       <Toast msg={toast.msg} visible={toast.visible} />
 
       {/* ── Results header ── */}
@@ -861,10 +1016,7 @@ export default function GiftResult() {
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Syne:wght@500;700;800;900&display=swap');
 
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes giftBounce {
-          0%,100% { transform: translateY(0) rotate(-5deg); }
-          50%      { transform: translateY(-18px) rotate(5deg); }
-        }
+
         @keyframes savePulse {
           0%,100% { opacity: 1; transform: scale(1); }
           50%      { opacity: 0.8; transform: scale(0.97); }

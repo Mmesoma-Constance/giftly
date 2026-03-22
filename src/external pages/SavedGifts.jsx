@@ -143,8 +143,7 @@ function ProductCard({ p, onRemove }) {
           <span>{src.icon}</span>
           <span>
             Available on{" "}
-            
-             <a href={`https://${src.url}`}
+            <a href={`https://${src.url}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#5C4A3F] hover:text-[#E8614D] transition-colors"
@@ -177,8 +176,7 @@ function ProductCard({ p, onRemove }) {
               </div>
             )}
           </div>
-          
-          <a  href={`https://www.${src.url}`}
+          <a href={`https://www.${src.url}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-5 py-2.5 rounded-full font-bold
@@ -198,17 +196,32 @@ function ProductCard({ p, onRemove }) {
   );
 }
 
-// ── SAVED SEARCH CARD — redesigned to show full title ──
+// ── SAVED SEARCH CARD ──
 function SavedSearchCard({ entry, onRerun, onDelete }) {
   const date = new Date(entry.ts).toLocaleDateString("en-GB", {
     day: "numeric", month: "short", year: "numeric",
   });
 
-  // Parse heading to highlight the key parts
-  // heading format: "Perfect gifts for your [Relationship] under ₦[Amount]"
-  const headingParts = entry.heading.match(
-    /^(Perfect gifts for your\s+)(.+?)(\s+under\s+)(₦[\d,]+)$/i
-  );
+  // NEW regex: handles both formats:
+  //   "Perfect gifts for your [Rel] under ₦[Amount]"
+  //   "Perfect Birthday gifts for your [Rel] under ₦[Amount]"
+  //
+  // Groups:
+  // Split the heading into three semantic parts:
+  //   prefix → "Perfect Birthday gifts for your " (everything up to the relationship)
+  //   rel    → "Girlfriend"                        (highlighted in coral)
+  //   amount → "₦17,500"                           (rendered as a pill)
+  const forYourIdx  = entry.heading.indexOf("for your ");
+  const underIdx    = entry.heading.lastIndexOf(" under ");
+  const amountMatch = entry.heading.match(/(₦[\d,]+)$/);
+  const parsed =
+    forYourIdx !== -1 && underIdx !== -1 && underIdx > forYourIdx && amountMatch
+      ? {
+          prefix: entry.heading.slice(0, forYourIdx + "for your ".length),
+          rel:    entry.heading.slice(forYourIdx + "for your ".length, underIdx),
+          amount: amountMatch[1],
+        }
+      : null;
 
   return (
     <motion.div
@@ -222,8 +235,6 @@ function SavedSearchCard({ entry, onRerun, onDelete }) {
         hover:-translate-y-1 hover:shadow-lg hover:border-[#E8614D]
         transition-all duration-300"
     >
-     
-
       <div className="p-5">
         {/* Icon + delete row */}
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -245,35 +256,47 @@ function SavedSearchCard({ entry, onRerun, onDelete }) {
           </button>
         </div>
 
-        {/* Full title — parsed for visual emphasis */}
-        {headingParts ? (
-          <div
-            className="text-[1rem] font-syne text-[#1C1410] leading-[1.4] mb-2"
-            style={{ fontFamily: "'Fraunces','Georgia',serif" }}
-          >
-            {headingParts[1]}
-            <span className="text-[#E8614D]">{headingParts[2]}</span>
-            {headingParts[3]}
-            <span
-              className="inline-block px-2 py-0.5 rounded-full text-[0.82rem] font-syne
-                ml-1 align-middle"
-              style={{
-                background: "rgba(232,97,77,.1)",
-                color: "#E8614D",
-                fontFamily: "'Syne',sans-serif",
-              }}
-            >
-              {headingParts[4]}
-            </span>
-          </div>
-        ) : (
-          <div
-            className="text-[1rem] font-syne text-[#1C1410] leading-[1.4] mb-2"
-            style={{ fontFamily: "'Fraunces','Georgia',serif" }}
-          >
-            {entry.heading}
-          </div>
-        )}
+        {/* Heading — always styled, zero regex risk */}
+        <div
+          className="text-[1rem] font-syne text-[#1C1410] leading-[1.4] mb-2"
+          style={{ fontFamily: "'Fraunces','Georgia',serif" }}
+        >
+          {parsed ? (() => {
+              // Split prefix into "Perfect " + occasion (if any) + "gifts for your "
+              // prefix example: "Perfect Birthday gifts for your "
+              const afterPerfect = parsed.prefix.slice("Perfect ".length); // "Birthday gifts for your "
+              const giftsIdx = afterPerfect.indexOf("gifts for your ");
+              const occasion = giftsIdx > 0 ? afterPerfect.slice(0, giftsIdx).trim() : "";
+              const giftsFor = "gifts for your ";
+              return (
+                <>
+                  {"Perfect "}
+                  {/* occasion word in coral if present e.g. "Birthday" */}
+                  {occasion && (
+                    <span className="text-[#E8614D]">{occasion} </span>
+                  )}
+                  {giftsFor}
+                  {/* relationship in coral */}
+                  <span className="text-[#E8614D]">{parsed.rel}</span>
+                  {" under "}
+                  {/* amount pill */}
+                  <span
+                    className="inline-block px-2 py-0.5 rounded-full text-[0.82rem] font-syne
+                      ml-1 align-middle"
+                    style={{
+                      background: "rgba(232,97,77,.1)",
+                      color: "#E8614D",
+                      fontFamily: "'Syne',sans-serif",
+                    }}
+                  >
+                    {parsed.amount}
+                  </span>
+                </>
+              );
+            })() : (
+            entry.heading
+          )}
+        </div>
 
         {/* Meta row */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F6F3F0]">
