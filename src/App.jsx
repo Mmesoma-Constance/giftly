@@ -15,6 +15,7 @@ import GenerateGift from './external pages/GenerateGift';
 import GiftResult   from './external pages/GiftResult';
 import SavedGifts   from './external pages/SavedGifts';
 
+
 function App() {
   return (
     <>
@@ -42,7 +43,10 @@ function App() {
 
         {/* Saved Gifts Page */}
         <Route path="/saved-gifts" element={<SavedGifts />} />
+
+
       </Routes>
+
 
       <Footer />
     </>

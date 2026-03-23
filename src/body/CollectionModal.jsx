@@ -2,81 +2,110 @@ import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-import image1 from "../assets/img1.jpg";
-import image2 from "../assets/sneakers.webp";
-import image3 from "../assets/perf.jpg";
-import image4 from "../assets/head.jpg";
-import image5 from "../assets/skincare.jpg";
-import image6 from "../assets/jewelry.webp";
-import image7 from "../assets/wine.jpg";
-import image8 from "../assets/game.jpg";
-
-const SOURCES = {
-  amazon: { name: "Amazon", url: "amazon.com", icon: "🛒" },
-  jumia:  { name: "Jumia",  url: "jumia.com.ng", icon: "🛍️" },
-  konga:  { name: "Konga",  url: "konga.com", icon: "🏪" },
-  zara:   { name: "Zara",   url: "zara.com", icon: "👗" },
-  glam:   { name: "GlamHub", url: "glamhub.ng", icon: "💄" },
+const CAT_META = {
+  jewelry:     { label: "💍 Jewelry",          bg: "#FDF3E7", color: "#C8821A" },
+  accessories: { label: "👜 Accessories",       bg: "#EEF2FF", color: "#4F52B2" },
+  beauty:      { label: "💄 Beauty",            bg: "#FDF0F5", color: "#C2185B" },
+  electronics: { label: "📱 Electronics",       bg: "#E8F5E9", color: "#2E7D32" },
+  gifts:       { label: "🎁 Gifts & Keepsakes", bg: "#FFF3E0", color: "#E65100" },
 };
 
-const PRODUCTS = [
-  { id:1,  name:"Pearl Drop Earrings",           price:12500, image:image6, bg:"#fce4ec", source:"jumia"  },
-  { id:3,  name:"Men's Stainless Steel Watch",   price:22000, image:image1, bg:"#eceff1", source:"amazon" },
-  { id:5,  name:"Couple Locket Necklace",        price:11000, image:image6, bg:"#fce4ec", source:"amazon" },
-  { id:6,  name:"Classic White Sneakers",        price:17500, image:image2, bg:"#f5f5f5", source:"jumia"  },
-  { id:10, name:"Premium Leather Loafers",       price:21000, image:image2, bg:"#efebe9", source:"amazon" },
-  { id:11, name:"Oversized Comfort Hoodie",      price:8500,  image:image1, bg:"#e3f2fd", source:"jumia"  },
-  { id:12, name:"Silk Satin Robe & Nightwear",   price:13000, image:image5, bg:"#fce4ec", source:"amazon" },
-  { id:13, name:"Premium Linen Button-Up Shirt", price:10500, image:image1, bg:"#e8f5e9", source:"zara"   },
-  { id:16, name:"Wireless Earbuds",              price:25000, image:image4, bg:"#e8f5e9", source:"amazon" },
-  { id:17, name:"Smart Ambient Desk Lamp",       price:12000, image:image8, bg:"#fff3e0", source:"amazon" },
-  { id:18, name:"Portable Power Bank 20,000mAh", price:14500, image:image8, bg:"#eceff1", source:"konga"  },
-  { id:23, name:"Canvas Tote Bag",               price:5500,  image:image1, bg:"#f1f8e9", source:"konga"  },
-  { id:24, name:"Genuine Leather Bifold Wallet", price:8000,  image:image1, bg:"#efebe9", source:"amazon" },
-  { id:25, name:"Luxury Perfume Gift Set",       price:22000, image:image3, bg:"#fce4ec", source:"glam"   },
-  { id:26, name:"Signature Men's Cologne",       price:18500, image:image3, bg:"#eceff1", source:"amazon" },
-  { id:27, name:"Premium UV400 Sunglasses",      price:9500,  image:image1, bg:"#fff3e0", source:"jumia"  },
-  { id:28, name:"Complete Skincare Gift Set",    price:16000, image:image5, bg:"#fce4ec", source:"glam"   },
-  { id:29, name:"Artisan Scented Candle Set",    price:7800,  image:image7, bg:"#fff8e1", source:"konga"  },
-];
+function detectCategory(name = "") {
+  const n = name.toLowerCase();
+  if (/ring|necklace|bracelet|earring|pendant|locket|jewel|bangle|chain|pearl|anklet|brooch/.test(n))
+    return "jewelry";
+  if (/headphone|earbuds|speaker|tablet|laptop|charger|cable|power.?bank|gadget|camera|gaming|smartwatch|charging|wireless/.test(n))
+    return "electronics";
+  if (/perfume|cologne|candle|skincare|serum|moisturizer|makeup|lipstick|lotion|soap|bath|sunscreen|spa|robe|blush|mascara/.test(n))
+    return "beauty";
+  if (/bag|wallet|purse|tote|backpack|clutch|keychain|belt|scarf|hat|sunglasses|luggage|pouch|organis/.test(n))
+    return "accessories";
+  return "gifts";
+}
 
-const CollectionModal = ({ collection,  onClose, onSeeAll }) => {
+function getSourceIcon(source) {
+  const s = (source || "").toLowerCase();
+  if (s.includes("amazon"))    return "🛒";
+  if (s.includes("jumia"))     return "🛍️";
+  if (s.includes("sephora"))   return "💄";
+  if (s.includes("target"))    return "🎯";
+  if (s.includes("walmart"))   return "🏬";
+  if (s.includes("ulta"))      return "💅";
+  if (s.includes("nordstrom")) return "👜";
+  if (s.includes("etsy"))      return "🎨";
+  if (s.includes("ebay"))      return "🏷️";
+  if (s.includes("nike"))      return "👟";
+  if (s.includes("macy"))      return "🛍️";
+  return "🛒";
+}
+
+const TAG_COLORS = {
+  "Popular":         { bg: "#FFF3E0", color: "#E65100" },
+  "Trending":        { bg: "#FCE4EC", color: "#C2185B" },
+  "Budget-Friendly": { bg: "#E8F5E9", color: "#2E7D32" },
+  "Romance":         { bg: "#FCE4EC", color: "#E91E63" },
+  "Professional":    { bg: "#EEF2FF", color: "#4F52B2" },
+  "For Dad":         { bg: "#FDF3E7", color: "#C8821A" },
+};
+
+// ✅ Only show 3 products in modal as a teaser
+const MODAL_PREVIEW_COUNT = 3;
+
+const CollectionModal = ({ collection, onClose }) => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  const allProducts = collection?.products || [];
+
+  // ✅ Enrich all products with category (needed for results page)
+  const enrichedAll = allProducts.map((p) => ({
+    ...p,
+    cat: p.cat || detectCategory(p.name),
+  }));
+
+  // ✅ Only show first 3 in the modal — the rest are revealed on "See All"
+  const previewProducts = enrichedAll.slice(0, MODAL_PREVIEW_COUNT);
+  const hiddenCount     = enrichedAll.length - MODAL_PREVIEW_COUNT;
 
   useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleKey);
     document.body.style.overflow = "hidden";
     return () => {
+      document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [onClose]);
 
   if (!collection) return null;
 
-  const featuredProducts = collection.products
-    .map((id) => PRODUCTS.find((p) => p.id === id))
-    .filter(Boolean);
+  const tagStyle = TAG_COLORS[collection.tag] || { bg: "#F6F3F0", color: "#5C4A3F" };
 
+  // ✅ "See All" — caches ALL 12 products and navigates to full results page
   const handleSeeAll = () => {
     onClose();
-    if (onSeeAll) {
-      onSeeAll(collection.preset);
-    } else {
-      const { relationship, gender, budget, occasion } = collection.preset;
-      const params = new URLSearchParams();
-      if (relationship) params.set("relationship", relationship);
-      if (gender)       params.set("gender", gender);
-      if (budget)       params.set("budget", String(budget));
-      if (occasion)     params.set("occasion", occasion);
-      navigate(`/results?${params.toString()}`);
+
+    sessionStorage.removeItem("giftly_result_visited");
+    sessionStorage.removeItem("giftly_cached_results");
+    sessionStorage.removeItem("giftly_original_results");
+
+    try {
+      // Cache ALL products (not just the 3 shown in modal)
+      sessionStorage.setItem("giftly_cached_results",  JSON.stringify(enrichedAll));
+      sessionStorage.setItem("giftly_original_results", JSON.stringify(enrichedAll));
+      sessionStorage.setItem("giftly_result_visited",   "true");
+    } catch (e) {
+      console.warn("Could not cache collection products:", e);
     }
+
+    navigate("/result", {
+      state: {
+        ...collection.preset,
+        interests:         "",
+        isCollection:      true,
+        collectionTitle:   collection.title,
+        preloadedProducts: enrichedAll, // ALL 12 go to results page
+      },
+    });
   };
 
   return (
@@ -87,11 +116,8 @@ const CollectionModal = ({ collection,  onClose, onSeeAll }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-9800 flex items-center justify-center p-5"
-        style={{
-          background: "rgba(28,20,16,.55)",
-          backdropFilter: "blur(8px)",
-        }}
+        className="fixed inset-0 z-[9800] flex items-center justify-center p-5"
+        style={{ background: "rgba(28,20,16,.55)", backdropFilter: "blur(8px)" }}
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
@@ -100,139 +126,215 @@ const CollectionModal = ({ collection,  onClose, onSeeAll }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.88, y: 20 }}
           transition={{ type: "spring", stiffness: 300, damping: 28 }}
-          className="bg-[#FFFDF9] rounded-4xl w-full max-w-130 max-h-[88vh] overflow-y-auto"
-          style={{
-            boxShadow: "0 12px 40px rgba(28,20,16,.12), 0 24px 64px rgba(28,20,16,.08)",
-          }}
+          className="bg-[#FFFDF9] rounded-3xl w-full max-w-lg max-h-[88vh] overflow-y-auto"
+          style={{ boxShadow: "0 12px 40px rgba(28,20,16,.12), 0 24px 64px rgba(28,20,16,.08)" }}
           onClick={(e) => e.stopPropagation()}
         >
-
-          {/* ── HEAD ── */}
+          {/* ── Head ── */}
           <div className="flex justify-between items-start pt-7 px-7">
             <div>
-              <span className="text-[0.7rem] font-extrabold uppercase tracking-[0.08em] text-[#E8614D] block mb-1">
+              <span
+                className="text-[0.7rem] font-bold uppercase tracking-[0.08em]
+                  block mb-2 px-2 py-0.5 rounded-full w-fit"
+                style={{ background: tagStyle.bg, color: tagStyle.color }}
+              >
                 {collection.tag}
               </span>
-              <h2 className="font-fraunces text-[1.3rem] font-extrabold text-[#1C1410] leading-snug">
+              <h2
+                className="text-[1.3rem] font-extrabold text-[#1C1410] leading-snug"
+                style={{ fontFamily: "'Fraunces','Georgia',serif" }}
+              >
                 {collection.title}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="w-8.5 h-8.5 rounded-full bg-[#F6F3F0] border-none cursor-pointer
-                flex items-center justify-center text-[1.1rem] text-[#1C1410] shrink-0
-                hover:bg-[#EDE8E3] hover:scale-110 transition-all duration-200"
+              className="w-9 h-9 rounded-full bg-[#F6F3F0] border-none cursor-pointer
+                flex items-center justify-center text-[1.1rem] text-[#1C1410] flex-shrink-0
+                hover:bg-[#EDE8E3] hover:scale-110 transition-all duration-200 mt-1"
             >
               ✕
             </button>
           </div>
 
-          {/* ── BODY ── */}
-          <div className="px-7 pt-5 pb-7">
+          {/* ── Body ── */}
+          <div className="px-7 pt-5 pb-2">
 
-            {/* Image grid — 3 columns using collection images */}
-            <div className="grid grid-cols-3 gap-1.5 rounded-1.5 overflow-hidden h-35 mb-5">
-              {collection.images.map((img, i) => (
-                <div key={i} className="w-full h-full overflow-hidden">
-                  <img
-                    src={img}
-                    alt={`collection-${i}`}
-                    className="w-full h-full object-cover"
-                  />
+            {/* 3-image grid from real Supabase product images */}
+            <div className="grid grid-cols-3 gap-1.5 rounded-xl overflow-hidden h-36 mb-5">
+              {previewProducts.map((p, i) => (
+                <div key={i} className="w-full h-full overflow-hidden bg-[#F6F3F0]">
+                  {p.image ? (
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                        e.target.parentNode.style.background = "#EDE8E3";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-2xl bg-[#EDE8E3]">🎁</div>
+                  )}
                 </div>
               ))}
             </div>
 
             {/* Description */}
-            <p className="text-[0.9rem] text-[#5C4A3F] leading-[1.7] mb-6">
+            <p className="text-[0.9rem] text-[#5C4A3F] leading-[1.7] mb-5">
               {collection.desc}
             </p>
 
-            {/* Featured picks label */}
-            <div className="font-bold text-[0.84rem] text-[#1C1410] mb-3.5">
-              ✨ Featured Picks
+            {/* Section label */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-bold text-[0.84rem] text-[#1C1410]">
+                ✨ Featured Picks
+              </span>
+              <span className="text-[0.72rem] text-[#9C8B82]">
+                {MODAL_PREVIEW_COUNT} of {enrichedAll.length} · click to buy
+              </span>
             </div>
 
-            {/* Product rows */}
-            <div>
-              {featuredProducts.map((p, i) => {
-                const src = SOURCES[p.source] || SOURCES.amazon;
-                return (
-                  <div
-                    key={p.id}
-                    className={`flex items-center gap-3 py-3 ${
-                      i < featuredProducts.length - 1
-                        ? "border-b border-[#F6F3F0]"
-                        : ""
-                    }`}
-                  >
-                    {/* Product thumbnail image */}
-                    <div className="w-12 h-12 rounded-[10px] overflow-hidden shrink-0">
-                      <img
-                        src={p.image}
-                        alt={p.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+            {/* ✅ Only 3 preview products shown in modal */}
+            {enrichedAll.length === 0 ? (
+              <div className="text-center py-8">
+                <span className="text-3xl block mb-2">🎁</span>
+                <p className="text-[0.85rem] text-[#9C8B82]">
+                  Products haven't been seeded yet. Please run the seed script.
+                </p>
+              </div>
+            ) : (
+              <div>
+                {previewProducts.map((p, i) => {
+                  const catMeta    = CAT_META[p.cat] || CAT_META.gifts;
+                  const sourceIcon = getSourceIcon(p.source);
+                  const productUrl = p.buyUrl;
+                  const ratingNum  = parseFloat(p.rating) || 4;
+                  const stars      = "★".repeat(Math.floor(ratingNum));
 
-                    {/* Name + source */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-[0.88rem] text-[#1C1410] leading-snug truncate">
-                        {p.name}
-                      </div>
-                      <div className="text-[0.75rem] text-[#9C8B82] mt-0.5">
-                        {src.icon} {src.name}
-                      </div>
-                    </div>
-
-                    {/* Price */}
-                    <div className="font-fraunces font-bold text-[#E8614D] text-[0.95rem] shrink-0">
-                      ₦{p.price.toLocaleString()}
-                    </div>
-
-                    {/* Buy button */}
-                    
-                     <a href={`https://${src.url}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 px-3 py-1.5 rounded-full bg-[#E8614D] text-white
-                        font-bold text-[0.76rem] no-underline
-                        hover:bg-[#C94B38] hover:-translate-y-px
-                        transition-all duration-200"
-                      style={{ boxShadow: "0 4px 12px rgba(232,97,77,.3)" }}
+                  return (
+                    <div
+                      key={p.id || i}
+                      className={`flex items-center gap-3 py-3 ${
+                        i < previewProducts.length - 1 ? "border-b border-[#F6F3F0]" : ""
+                      }`}
                     >
-                      Buy →
-                    </a>
-                  </div>
-                );
-              })}
-            </div>
+                      {/* Product image */}
+                      <div className="w-[52px] h-[52px] rounded-[10px] overflow-hidden flex-shrink-0 bg-[#F6F3F0]">
+                        {p.image ? (
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.parentNode.innerHTML =
+                                '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:#EDE8E3">🎁</div>';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xl bg-[#EDE8E3]">🎁</div>
+                        )}
+                      </div>
+
+                      {/* Name + meta */}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-[0.84rem] text-[#1C1410] leading-snug line-clamp-2">
+                          {p.name}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span
+                            className="text-[0.65rem] font-bold px-[6px] py-[2px] rounded-full"
+                            style={{ background: catMeta.bg, color: catMeta.color }}
+                          >
+                            {catMeta.label}
+                          </span>
+                          <span className="text-[0.7rem] text-[#9C8B82]">
+                            {sourceIcon} {p.source}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[0.67rem] text-[#F0A830]">{stars}</span>
+                          {p.reviews > 0 && (
+                            <span className="text-[0.67rem] text-[#9C8B82]">
+                              ({typeof p.reviews === "number" ? p.reviews.toLocaleString() : p.reviews})
+                            </span>
+                          )}
+                          {p.delivery?.toLowerCase().includes("free") && (
+                            <span className="text-[0.65rem] text-green-600 font-semibold">
+                              🚚 Free
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      <div
+                        className="font-bold text-[#E8614D] text-[0.9rem] flex-shrink-0"
+                        style={{ fontFamily: "'Fraunces','Georgia',serif" }}
+                      >
+                        {p.price || "—"}
+                      </div>
+
+                      {/* Buy button */}
+                      <a
+                        href={productUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#E8614D] text-white
+                          font-bold text-[0.74rem] no-underline
+                          hover:bg-[#C94B38] hover:-translate-y-px transition-all duration-200"
+                        style={{ boxShadow: "0 4px 12px rgba(232,97,77,.28)" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Buy →
+                      </a>
+                    </div>
+                  );
+                })}
+
+               
+              </div>
+            )}
           </div>
 
-          {/* ── FOOTER ACTIONS ── */}
-          <div className="flex gap-3 px-7 pb-7">
+          {/* ── Footer ── */}
+          <div className="flex gap-3 px-7 py-5 border-t border-[#F6F3F0] sticky bottom-0 bg-[#FFFDF9]">
             <button
               onClick={onClose}
-              className="px-5 py-2.75 rounded-full bg-transparent text-[#5C4A3F] font-bold
+              className="px-5 py-3 rounded-full bg-transparent text-[#5C4A3F] font-bold
                 border-[1.5px] border-[#EDE8E3] cursor-pointer text-[0.82rem]
                 hover:bg-[#F6F3F0] transition-all duration-200"
             >
               Close
             </button>
+
+            {/* ✅ See All — reveals all 12 products on full results page */}
             <button
               onClick={handleSeeAll}
-              className="flex-1 py-2.75 rounded-full bg-[#E8614D] text-white font-bold
+              className="flex-1 py-3 rounded-full bg-[#E8614D] text-white font-bold
                 border-none cursor-pointer text-[0.9rem]
-                hover:bg-[#C94B38] hover:-translate-y-px
-                transition-all duration-250"
+                hover:bg-[#C94B38] hover:-translate-y-px transition-all duration-200"
               style={{ boxShadow: "0 8px 32px rgba(232,97,77,.28)" }}
             >
-              See All Suggestions 
+              See All Suggestions →
             </button>
           </div>
 
         </motion.div>
       </motion.div>
+
+      <style>{`
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </AnimatePresence>
   );
 };

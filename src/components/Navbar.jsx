@@ -10,8 +10,8 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
-  const [scrolled,  setScrolled]  = useState(false);
-  const [menuOpen,  setMenuOpen]  = useState(false);
+  const [scrolled,   setScrolled]   = useState(false);
+  const [menuOpen,   setMenuOpen]   = useState(false);
   const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
@@ -20,18 +20,18 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Keep saved count badge in sync with localStorage
+  // ✅ FIXED: reads from giftly_saved_products (full product objects)
   useEffect(() => {
     const sync = () => {
       try {
-        const ids = JSON.parse(localStorage.getItem("giftly_saved") || "[]");
-        setSavedCount(ids.length);
+        const products = JSON.parse(localStorage.getItem("giftly_saved_products") || "[]");
+        setSavedCount(products.length);
       } catch { setSavedCount(0); }
     };
     sync();
     window.addEventListener("storage", sync);
     // Poll every second for same-tab updates
-    const iv = setInterval(sync, 1000);
+    const iv = setInterval(sync, 800);
     return () => { window.removeEventListener("storage", sync); clearInterval(iv); };
   }, []);
 
@@ -60,11 +60,9 @@ export default function Navbar() {
         <ul className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map(({ label, href }) => (
             <li key={label}>
-              
-              <a  href={href}
+              <a href={href}
                 className="text-[15px] text-gray-500 hover:text-gray-900 hover:bg-gray-100
-                  px-4 py-2 rounded-lg transition-all duration-150"
-              >
+                  px-4 py-2 rounded-lg transition-all duration-150">
                 {label}
               </a>
             </li>
@@ -83,10 +81,11 @@ export default function Navbar() {
           >
             <Heart className="w-4 h-4" />
             Saved
+            {/* ✅ Badge now shows correct count */}
             {savedCount > 0 && (
               <span
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white
-                  text-[0.65rem] font-syne flex items-center justify-center"
+                  text-[0.65rem] font-bold flex items-center justify-center"
                 style={{ background: "#E8614D" }}
               >
                 {savedCount > 9 ? "9+" : savedCount}
@@ -112,11 +111,11 @@ export default function Navbar() {
             aria-label="Toggle menu"
           >
             <span className={`block w-5 h-0.5 bg-gray-700 rounded transition-all duration-300
-              origin-center ${menuOpen ? "translate-y-[7px] rotate-45" : ""}`}/>
+              origin-center ${menuOpen ? "translate-y-[7px] rotate-45" : ""}`} />
             <span className={`block w-5 h-0.5 bg-gray-700 rounded transition-all duration-300
-              ${menuOpen ? "opacity-0 scale-x-0" : ""}`}/>
+              ${menuOpen ? "opacity-0 scale-x-0" : ""}`} />
             <span className={`block w-5 h-0.5 bg-gray-700 rounded transition-all duration-300
-              origin-center ${menuOpen ? "-translate-y-[7px] -rotate-45" : ""}`}/>
+              origin-center ${menuOpen ? "-translate-y-[7px] -rotate-45" : ""}`} />
           </button>
         </div>
       </nav>
@@ -132,41 +131,29 @@ export default function Navbar() {
         }`}
       >
         {NAV_LINKS.map(({ label, href }) => (
-          
-            <a key={label}
-            href={href}
-            onClick={() => setMenuOpen(false)}
+          <a key={label} href={href} onClick={() => setMenuOpen(false)}
             className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50
-              px-3 py-2.5 rounded-lg transition-all duration-150"
-          >
+              px-3 py-2.5 rounded-lg transition-all duration-150">
             {label}
           </a>
         ))}
 
-        <Link
-          to="/saved-gifts"
-          onClick={() => setMenuOpen(false)}
+        <Link to="/saved-gifts" onClick={() => setMenuOpen(false)}
           className="inline-flex items-center gap-2 px-5 py-3 rounded-full
-            text-[#C94B38] border border-[#C94B38] font-semibold mt-2 text-[0.88rem]"
-        >
+            text-[#C94B38] border border-[#C94B38] font-semibold mt-2 text-[0.88rem]">
           <Heart className="w-4 h-4" />
           Saved Gifts
           {savedCount > 0 && (
-            <span
-              className="ml-auto text-[0.72rem] font-syne px-2 py-0.5 rounded-full text-white"
-              style={{ background: "#E8614D" }}
-            >
+            <span className="ml-auto text-[0.72rem] font-bold px-2 py-0.5 rounded-full text-white"
+              style={{ background: "#E8614D" }}>
               {savedCount}
             </span>
           )}
         </Link>
 
-        <Link
-          to="/generate-gift"
-          onClick={() => setMenuOpen(false)}
+        <Link to="/generate-gift" onClick={() => setMenuOpen(false)}
           className="inline-flex items-center gap-2 px-7 py-3 rounded-full
-            text-white bg-[#C94B38] font-semibold hover:opacity-90 transition-all text-[0.88rem]"
-        >
+            text-white bg-[#C94B38] font-semibold hover:opacity-90 transition-all text-[0.88rem]">
           Find A Gift
           <ArrowRight className="w-4 h-4" />
         </Link>
