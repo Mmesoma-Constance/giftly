@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 
 const INTERESTS_PLACEHOLDER = "e.g. music, skincare, gaming, cooking, fashion, fitness…";
 
-// ── Gender-aware relationship options ──
 const RELATIONSHIP_BY_GENDER = {
   female: [
     { group: "Partner",          options: [["girlfriend","Girlfriend"],["wife","Wife"]] },
@@ -27,12 +26,10 @@ const RELATIONSHIP_BY_GENDER = {
   ],
 };
 
-// ── Gender-aware relationship pools for Surprise Me ──
 const RELATIONSHIPS_FEMALE    = ["girlfriend","wife","mom","sister","grandparent","child","best-friend","friend","colleague","boss"];
 const RELATIONSHIPS_MALE      = ["boyfriend","husband","dad","brother","grandparent","child","best-friend","friend","colleague","boss"];
 const RELATIONSHIPS_NONBINARY = ["girlfriend","boyfriend","wife","husband","mom","dad","sister","brother","grandparent","child","best-friend","friend","colleague","boss"];
 
-// ── Random profile pools ──
 const AGES = [
   8, 10, 12, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
   30, 32, 34, 35, 38, 40, 42, 45, 48, 50, 52, 55, 58, 60, 65, 70,
@@ -40,9 +37,12 @@ const AGES = [
 
 const GENDERS = ["female", "male", "nonbinary"];
 
+// ✅ Updated occasions pool for Surprise Me
 const OCCASIONS = [
-  "birthday", "anniversary", "valentine", "christmas",
-  "graduation", "wedding", "just-because",
+  "birthday", "anniversary", "valentine", "christmas", "graduation",
+  "wedding", "just-because", "fathers-day", "mothers-day",
+  "back-to-school", "halloween", "baby-shower", "housewarming",
+  "promotion", "engagement", "get-well-soon", "thank-you",
 ];
 
 const BUDGETS = [
@@ -68,9 +68,7 @@ const INTEREST_POOL = [
   "volunteering", "entrepreneurship",
 ];
 
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function pickMultiple(arr, min = 2, max = 4) {
   const count    = min + Math.floor(Math.random() * (max - min + 1));
@@ -78,14 +76,12 @@ function pickMultiple(arr, min = 2, max = 4) {
   return shuffled.slice(0, count).join(", ");
 }
 
-// ✅ Generates a fully random profile with gender-appropriate relationships
 function generateRandomProfile() {
   const gender = pick(GENDERS);
   const relationshipPool =
     gender === "female"   ? RELATIONSHIPS_FEMALE    :
     gender === "male"     ? RELATIONSHIPS_MALE      :
     RELATIONSHIPS_NONBINARY;
-
   return {
     age:          pick(AGES),
     gender,
@@ -96,7 +92,6 @@ function generateRandomProfile() {
   };
 }
 
-// ── Budget config ──
 const BUDGET_MIN     = 2000;
 const BUDGET_MAX     = 100000;
 const BUDGET_DEFAULT = 20000;
@@ -104,40 +99,68 @@ const BUDGET_DEFAULT = 20000;
 function formatNaira(val) {
   return "₦" + Number(val).toLocaleString("en-NG");
 }
+
+// ✅ Format number with commas for the input display
+function formatWithCommas(val) {
+  if (!val && val !== 0) return "";
+  return Number(val).toLocaleString("en-NG");
+}
+
+// ✅ Strip commas to get raw number
+function stripCommas(val) {
+  return val.replace(/,/g, "");
+}
+
 function sliderPercent(val) {
   return ((val - BUDGET_MIN) / (BUDGET_MAX - BUDGET_MIN)) * 100;
 }
 
 export default function GenerateGift() {
   const navigate = useNavigate();
-  const [age,          setAge]          = useState("");
-  const [gender,       setGender]       = useState("");
-  const [relationship, setRelationship] = useState("");
-  const [occasion,     setOccasion]     = useState("");
-  const [budget,       setBudget]       = useState(BUDGET_DEFAULT);
-  const [interests,    setInterests]    = useState("");
-  const [shaking,      setShaking]      = useState(false);
+  const [age,           setAge]           = useState("");
+  const [gender,        setGender]        = useState("");
+  const [relationship,  setRelationship]  = useState("");
+  const [occasion,      setOccasion]      = useState("");
+  const [budget,        setBudget]        = useState(BUDGET_DEFAULT);
+  // ✅ Separate display value for the budget input (shows commas)
+  const [budgetDisplay, setBudgetDisplay] = useState(formatWithCommas(BUDGET_DEFAULT));
+  const [interests,     setInterests]     = useState("");
+  const [shaking,       setShaking]       = useState(false);
   const sliderRef = useRef(null);
 
   const pct = sliderPercent(budget);
 
-  function syncFromSlider(v) { setBudget(Number(v)); }
-  function syncFromInput(v) {
-    const n = Math.min(BUDGET_MAX, Math.max(BUDGET_MIN, Number(v) || BUDGET_MIN));
+  // ✅ When slider changes — update both raw budget and display
+  function syncFromSlider(v) {
+    const n = Number(v);
     setBudget(n);
+    setBudgetDisplay(formatWithCommas(n));
   }
 
-  // ✅ When gender changes, reset relationship if it no longer makes sense
+  // ✅ When user types in input — strip commas, validate, reformat
+  function handleBudgetInputChange(e) {
+    const raw     = stripCommas(e.target.value);
+    const numeric = raw.replace(/[^0-9]/g, "");
+    if (numeric === "") { setBudgetDisplay(""); return; }
+    const n = Math.min(BUDGET_MAX, Number(numeric));
+    setBudget(n);
+    setBudgetDisplay(formatWithCommas(n));
+  }
+
+  // ✅ On blur — enforce min value and reformat
+  function handleBudgetInputBlur() {
+    const clamped = Math.max(BUDGET_MIN, budget || BUDGET_MIN);
+    setBudget(clamped);
+    setBudgetDisplay(formatWithCommas(clamped));
+  }
+
   function handleGenderChange(val) {
     setGender(val);
     const validGroups  = RELATIONSHIP_BY_GENDER[val] || RELATIONSHIP_BY_GENDER[""];
     const validOptions = validGroups.flatMap((g) => g.options.map((o) => o[0]));
-    if (relationship && !validOptions.includes(relationship)) {
-      setRelationship("");
-    }
+    if (relationship && !validOptions.includes(relationship)) setRelationship("");
   }
 
-  // ✅ Every click generates a completely fresh random profile
   function surpriseMe() {
     const p = generateRandomProfile();
     setAge(p.age);
@@ -145,6 +168,7 @@ export default function GenerateGift() {
     setRelationship(p.relationship);
     setOccasion(p.occasion);
     setBudget(p.budget);
+    setBudgetDisplay(formatWithCommas(p.budget));
     setInterests(p.interests);
     setShaking(true);
     setTimeout(() => setShaking(false), 600);
@@ -152,42 +176,34 @@ export default function GenerateGift() {
 
   function clearForm() {
     setAge(""); setGender(""); setRelationship("");
-    setOccasion(""); setBudget(BUDGET_DEFAULT); setInterests("");
+    setOccasion(""); setBudget(BUDGET_DEFAULT);
+    setBudgetDisplay(formatWithCommas(BUDGET_DEFAULT)); setInterests("");
   }
 
   function handleSubmit() {
     if (!age || !gender || !relationship || !budget) return;
     sessionStorage.removeItem("giftly_result_visited");
     sessionStorage.removeItem("giftly_cached_results");
-    navigate("/result", {
-      state: { age, gender, relationship, occasion, budget, interests },
-    });
+    navigate("/result", { state: { age, gender, relationship, occasion, budget, interests } });
   }
 
   const valid = age && gender && relationship && budget;
-
-  // ✅ Current gender-filtered relationship options
   const relationshipGroups = RELATIONSHIP_BY_GENDER[gender] || RELATIONSHIP_BY_GENDER[""];
 
   return (
-    <div
-      className="min-h-screen w-full mt-20"
-      style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}
-    >
+    <div className="min-h-screen w-full mt-20"
+      style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}>
+
       {/* Hero */}
       <div className="max-w-xl mx-auto px-5 pt-14 pb-10 text-center">
-        <span
-          className="inline-block text-xs font-black tracking-[.18em] uppercase mb-4
+        <span className="inline-block text-xs font-syne tracking-[.18em] uppercase mb-4
             px-4 py-1.5 rounded-full border border-[#E8614D]/30 text-[#E8614D]"
-          style={{ background: "rgba(232,97,77,.07)" }}
-        >
-          AI Gift Finder
+          style={{ background: "rgba(232,97,77,.07)" }}>
+          Your Gift Assistant
         </span>
-        <h1
-          className="text-[2.5rem] sm:text-[3.1rem] font-black leading-none tracking-tight
+        <h1 className="text-[2.5rem] sm:text-[3.1rem] font-black leading-none tracking-tight
             text-[#2C1A12] mb-4"
-          style={{ fontFamily: "'Fraunces','Georgia',serif", letterSpacing: "-.03em" }}
-        >
+          style={{ fontFamily: "'Fraunces','Georgia',serif", letterSpacing: "-.03em" }}>
           Describe your person
         </h1>
         <p className="text-base text-[#2C1A12]/60 leading-relaxed max-w-md mx-auto">
@@ -198,23 +214,17 @@ export default function GenerateGift() {
 
       {/* Form card */}
       <div className="max-w-2xl mx-auto px-5 pb-24">
-        <div
-          className="rounded-3xl border border-[#2C1A12]/10 bg-white p-8 sm:p-12"
-          style={{ boxShadow: "0 8px 48px rgba(44,26,18,.09),0 1.5px 6px rgba(44,26,18,.05)" }}
-        >
+        <div className="rounded-3xl border border-[#2C1A12]/10 bg-white p-8 sm:p-12"
+          style={{ boxShadow: "0 8px 48px rgba(44,26,18,.09),0 1.5px 6px rgba(44,26,18,.05)" }}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
             {/* Age */}
             <FormGroup label="Age" required>
-              <input
-                type="number" value={age}
-                onChange={e => setAge(e.target.value)}
-                placeholder="e.g. 25" min={1} max={110}
-                className={inputCls}
-              />
+              <input type="number" value={age} onChange={e => setAge(e.target.value)}
+                placeholder="e.g. 25" min={1} max={110} className={inputCls} />
             </FormGroup>
 
-            {/* Gender — changing this filters relationships */}
+            {/* Gender */}
             <FormGroup label="Gender" required>
               <SelectInput value={gender} onChange={handleGenderChange}>
                 <option value="">Select gender</option>
@@ -224,7 +234,7 @@ export default function GenerateGift() {
               </SelectInput>
             </FormGroup>
 
-            {/* Relationship — filtered by gender */}
+            {/* Relationship */}
             <FormGroup label="Relationship" required>
               <SelectInput value={relationship} onChange={setRelationship}>
                 <option value="">Select relationship</option>
@@ -238,21 +248,40 @@ export default function GenerateGift() {
               </SelectInput>
             </FormGroup>
 
-            {/* Occasion */}
+            {/* ✅ Updated Occasion — all new occasions added */}
             <FormGroup label="Occasion">
               <SelectInput value={occasion} onChange={setOccasion}>
                 <option value="">Select occasion (optional)</option>
-                <option value="birthday">🎂 Birthday</option>
-                <option value="anniversary">💍 Anniversary</option>
-                <option value="valentine">💝 Valentine's Day</option>
-                <option value="christmas">🎄 Christmas</option>
-                <option value="graduation">🎓 Graduation</option>
-                <option value="wedding">💒 Wedding</option>
-                <option value="just-because">💛 Just Because</option>
+                <optgroup label="Celebrations">
+                  <option value="birthday">🎂 Birthday</option>
+                  <option value="anniversary">💍 Anniversary</option>
+                  <option value="graduation">🎓 Graduation</option>
+                  <option value="wedding">💒 Wedding</option>
+                  <option value="engagement">💎 Engagement</option>
+                  <option value="baby-shower">🍼 Baby Shower</option>
+                  <option value="housewarming">🏠 Housewarming</option>
+                  <option value="promotion">🚀 Promotion / New Job</option>
+                </optgroup>
+                <optgroup label="Holidays & Seasons">
+                  <option value="valentine">💝 Valentine's Day</option>
+                  <option value="mothers-day">💐 Mother's Day</option>
+                  <option value="fathers-day">👔 Father's Day</option>
+                  <option value="christmas">🎄 Christmas</option>
+                  <option value="halloween">🎃 Halloween</option>
+                  <option value="back-to-school">🎒 Back to School</option>
+                </optgroup>
+                <optgroup label="Just Because">
+                  <option value="just-because">💛 Just Because</option>
+                  <option value="thank-you">🙏 Thank You</option>
+                  <option value="get-well-soon">🌸 Get Well Soon</option>
+                  <option value="last-minute">⚡ Last Minute</option>
+                  <option value="farewell">👋 Farewell</option>
+                  <option value="new-year">🎆 New Year</option>
+                </optgroup>
               </SelectInput>
             </FormGroup>
 
-            {/* Budget */}
+            {/* ✅ Budget — shows commas in input */}
             <div className="sm:col-span-2 flex flex-col gap-2">
               <label className="text-base font-syne tracking-wide text-[#2C1A12] uppercase">
                 Budget <span className="text-[#E8614D]">*</span>
@@ -260,24 +289,26 @@ export default function GenerateGift() {
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black
                   text-[#2C1A12]/40 text-sm pointer-events-none select-none">₦</span>
+                {/* ✅ Text input shows formatted value with commas */}
                 <input
-                  type="number" value={budget}
-                  onChange={e => syncFromInput(e.target.value)}
-                  placeholder="e.g. 20000" min={BUDGET_MIN}
+                  type="text"
+                  inputMode="numeric"
+                  value={budgetDisplay}
+                  onChange={handleBudgetInputChange}
+                  onBlur={handleBudgetInputBlur}
+                  placeholder="e.g. 20,000"
                   className={inputCls + " pl-8"}
                 />
               </div>
               <div className="mt-1">
-                <input
-                  ref={sliderRef} type="range"
+                <input ref={sliderRef} type="range"
                   min={BUDGET_MIN} max={BUDGET_MAX} step={1000} value={budget}
                   onChange={e => syncFromSlider(e.target.value)}
                   className="w-full h-[5px] rounded-full outline-none cursor-pointer appearance-none"
                   style={{
                     background: `linear-gradient(to right,#E8614D ${pct}%,rgba(44,26,18,.12) ${pct}%)`,
                     WebkitAppearance: "none",
-                  }}
-                />
+                  }} />
                 <div className="flex justify-between mt-2 text-[.72rem] font-bold text-[#2C1A12]/40 tracking-wide">
                   <span>₦2,000</span><span>₦50,000</span><span>₦100,000</span>
                 </div>
@@ -293,12 +324,8 @@ export default function GenerateGift() {
               <label className="text-base font-syne tracking-wide text-[#2C1A12] uppercase">
                 Interests &amp; Hobbies
               </label>
-              <input
-                type="text" value={interests}
-                onChange={e => setInterests(e.target.value)}
-                placeholder={INTERESTS_PLACEHOLDER}
-                className={inputCls}
-              />
+              <input type="text" value={interests} onChange={e => setInterests(e.target.value)}
+                placeholder={INTERESTS_PLACEHOLDER} className={inputCls} />
               <span className="text-[.74rem] text-[#2C1A12]/35 leading-relaxed">
                 Optional — helps us personalise far better ✨
               </span>
@@ -307,41 +334,32 @@ export default function GenerateGift() {
             <div className="sm:col-span-2 h-px bg-[#2C1A12]/07 my-1" />
 
             {/* Surprise Me bar */}
-            <div
-              className={`sm:col-span-2 flex flex-col md:flex-row items-center gap-3
+            <div className={`sm:col-span-2 flex flex-col md:flex-row items-center gap-3
                 px-5 py-4 rounded-2xl border border-dashed border-[#2C1A12]/15
                 transition-transform ${shaking ? "animate-[wiggle_.5s_ease]" : ""}`}
-              style={{ background: "linear-gradient(135deg,rgba(232,97,77,.04),rgba(240,168,48,.04))" }}
-            >
+              style={{ background: "linear-gradient(135deg,rgba(232,97,77,.04),rgba(240,168,48,.04))" }}>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#2C1A12]/60 leading-snug">
-                  🎲 <strong className="text-[#2C1A12]/80">Not sure?</strong>{" "}
+                   <strong className="text-[#2C1A12]/80">Not sure?</strong>{" "}
                   We'll generate a completely random profile — every click is different!
                 </p>
-                {/* Preview of current random pick */}
                 {age && gender && relationship && (
                   <p className="text-[0.72rem] text-[#E8614D] font-semibold mt-1.5">
                     → {age}yr {gender} · {relationship} · {occasion || "no occasion"} · ₦{Number(budget).toLocaleString()}
                   </p>
                 )}
               </div>
-              <button
-                onClick={surpriseMe}
+              <button onClick={surpriseMe}
                 className="shrink-0 px-4 py-2 rounded-xl text-sm font-black tracking-wide
                   text-white transition-all duration-200 active:scale-95 hover:brightness-110"
-                style={{
-                  background: "linear-gradient(135deg,#F0A830,#E8614D)",
-                  boxShadow: "0 4px 14px rgba(240,168,48,.35)",
-                }}
-              >
-                Surprise Me 🎲
+                style={{ background: "linear-gradient(135deg,#E8614D)", boxShadow: "0 4px 14px rgba(240,168,48,.35)" }}>
+                Surprise Me 
               </button>
             </div>
 
             {/* Actions */}
             <div className="sm:col-span-2 flex flex-col sm:flex-row gap-3 mt-2">
-              <button
-                onClick={handleSubmit} disabled={!valid}
+              <button onClick={handleSubmit} disabled={!valid}
                 className="flex-1 flex justify-center items-center gap-2 px-6 py-4
                   rounded-full font-syne text-lg font-bold text-white tracking-wide
                   transition-all duration-200 active:scale-[.98]
@@ -349,16 +367,13 @@ export default function GenerateGift() {
                 style={{
                   background: valid ? "linear-gradient(135deg,#E8614D 0%,#c94a38 100%)" : "#180806",
                   boxShadow:  valid ? "0 6px 24px rgba(232,97,77,.32)" : "none",
-                }}
-              >
-                Find Perfect Gift 🎁
+                }}>
+                Find Perfect Gift 
               </button>
-              <button
-                onClick={clearForm}
+              <button onClick={clearForm}
                 className="px-6 py-4 rounded-2xl font-bold text-sm text-[#2C1A12]/50
                   border border-[#2C1A12]/10 bg-transparent
-                  hover:bg-[#2C1A12]/04 transition-all duration-200"
-              >
+                  hover:bg-[#2C1A12]/04 transition-all duration-200">
                 Clear
               </button>
             </div>
@@ -412,10 +427,8 @@ function FormGroup({ label, required, children }) {
 function SelectInput({ value, onChange, children }) {
   return (
     <div className="relative">
-      <select
-        value={value} onChange={e => onChange(e.target.value)}
-        className={inputCls + " pr-10 cursor-pointer appearance-none"}
-      >
+      <select value={value} onChange={e => onChange(e.target.value)}
+        className={inputCls + " pr-10 cursor-pointer appearance-none"}>
         {children}
       </select>
       <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#2C1A12]/40">

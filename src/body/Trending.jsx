@@ -256,7 +256,7 @@ const Trending = () => {
   const goPrev = () => { if (page > 0) { setDirection(-1); setPage((p) => p - 1); } };
 
   return (
-    <section className="bg-[#180806] py-12 sm:py-16 md:py-32 overflow-hidden" id="trending">
+    <section className="bg-[#180806] py-12 sm:py-16 md:py-32 overflow-hidden scroll-mt-6" id="trending">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
         {/* HEADER */}

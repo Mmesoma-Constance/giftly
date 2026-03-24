@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Search } from "lucide-react";
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -198,8 +199,8 @@ function SavedSearchCard({ entry, onRerun, onDelete }) {
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[1.2rem] flex-shrink-0 mt-0.5"
-            style={{ background: "linear-gradient(135deg,#E8614D,#F0A830)" }}>
-            🔍
+            style={{ background: "linear-gradient(135deg,#E8614D)" }}>
+            <Search className="w-5 h-5 text-white" />
           </div>
           <button onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
             className="w-7 h-7 rounded-full bg-[#F6F3F0] flex items-center justify-center
@@ -375,7 +376,7 @@ export default function SavedGifts() {
               className="flex items-center gap-2 px-7 py-3.5 rounded-full font-bold text-white
                 text-[0.95rem] border-none cursor-pointer hover:opacity-90 transition-all duration-200"
               style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", boxShadow: "0 6px 24px rgba(232,97,77,.32)", fontFamily: "'Syne',sans-serif" }}>
-              Find Gifts 🎁
+              Find Gifts 
             </button>
           </div>
         )}
@@ -409,7 +410,7 @@ export default function SavedGifts() {
                 <button onClick={() => navigate("/generate-gift")}
                   className="px-6 py-3 rounded-full font-bold text-white text-[0.88rem] border-none cursor-pointer hover:opacity-90 transition-all"
                   style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", boxShadow: "0 6px 24px rgba(232,97,77,.28)", fontFamily: "'Syne',sans-serif" }}>
-                  Browse Gift Ideas 🎁
+                  Browse Gift Ideas 
                 </button>
               </div>
             )}
@@ -447,7 +448,7 @@ export default function SavedGifts() {
                 <button onClick={() => navigate("/generate-gift")}
                   className="px-6 py-3 rounded-full font-bold text-white text-[0.88rem] border-none cursor-pointer hover:opacity-90 transition-all"
                   style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", boxShadow: "0 6px 24px rgba(232,97,77,.28)", fontFamily: "'Syne',sans-serif" }}>
-                  Generate Gift Ideas 🎁
+                  Generate Gift Ideas 
                 </button>
               </div>
             )}

@@ -17,20 +17,12 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <span className="font-serif text-[1.5rem] font-bold text-white block mb-[14px]">
-              Gift<em className="text-rose not-italic">ly</em> 🎁
+              Gift<em className="text-rose not-italic">ly</em> 
             </span>
             <p className="text-[.86rem] text-white/42 leading-[1.75] mb-6">
-              AI-powered gift discovery that helps you find thoughtful, personalized gifts for anyone — in seconds. No stress, no guesswork.
+              AI-powered gift discovery that helps you find thoughtful, personalized gifts for anyone - in seconds. No stress, no guesswork.
             </p>
-            <div className="flex gap-2">
-              {['𝕏','in','📸','f'].map((s, i) => (
-                <a key={i} href="#"
-                  className="w-9 h-9 rounded-[9px] bg-white/6 flex items-center justify-center text-white/45 text-[.85rem]
-                    no-underline cursor-pointer hover:bg-rose hover:text-white hover:-translate-y-0.5 transition-all">
-                  {s}
-                </a>
-              ))}
-            </div>
+           
           </div>
 
           {/* Product */}
@@ -55,7 +47,7 @@ export default function Footer() {
           <div>
             <h4 className="text-[.8rem] font-extrabold tracking-[.1em] uppercase text-white/50 mb-[18px]">Company</h4>
             <ul className="list-none">
-              {['About Us','Blog','Careers','Contact'].map(l => (
+              {['About Us','Blog','Contact'].map(l => (
                 <li key={l} className="mb-[10px]">
                   <a className="text-[.85rem] text-white/42 no-underline cursor-pointer hover:text-white transition-colors"
                     onClick={() => l === 'Blog'}>{l}</a>
@@ -77,9 +69,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="pt-7 flex flex-col md:flex-row justify-between items-center gap-3 flex-wrap">
-          <p className="text-[.78rem] text-white/25">© 2024 Giftly. Made with ❤️ for thoughtful gifters.</p>
-          <p className="text-[.78rem] text-white/25">Powered by smart recommendations · All prices in NGN</p>
+        <div className="pt-7 text-center justify-between items-center gap-3 flex-wrap">
+           <p className="text-[.78rem] text-white/25">© 2026 Giftly · All rights reserved. </p>
         </div>
       </div>
     </footer>

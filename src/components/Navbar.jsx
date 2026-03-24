@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowRight, Heart } from "lucide-react";
 
 const NAV_LINKS = [
@@ -9,35 +9,93 @@ const NAV_LINKS = [
   { label: "Blog",        href: "#blog" },
 ];
 
-export default function Navbar() {
-  const [scrolled,   setScrolled]   = useState(false);
-  const [menuOpen,   setMenuOpen]   = useState(false);
-  const [savedCount, setSavedCount] = useState(0);
+// How tall your fixed navbar is — used to offset scroll so section isn't hidden behind it
+const NAV_HEIGHT = 72;
 
+export default function Navbar() {
+  const [scrolled,    setScrolled]    = useState(false);
+  const [menuOpen,    setMenuOpen]    = useState(false);
+  const [savedCount,  setSavedCount]  = useState(0);
+  const [activeHash,  setActiveHash]  = useState("");
+
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const isHome    = location.pathname === "/";
+
+  // ── Scroll detection → sticky style ──
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ✅ FIXED: reads from giftly_saved_products (full product objects)
+  // ── Saved count badge ──
   useEffect(() => {
     const sync = () => {
       try {
-        const products = JSON.parse(localStorage.getItem("giftly_saved_products") || "[]");
-        setSavedCount(products.length);
+        const ids = JSON.parse(localStorage.getItem("giftly_saved") || "[]");
+        setSavedCount(ids.length);
       } catch { setSavedCount(0); }
     };
     sync();
     window.addEventListener("storage", sync);
-    // Poll every second for same-tab updates
     const iv = setInterval(sync, 800);
     return () => { window.removeEventListener("storage", sync); clearInterval(iv); };
   }, []);
 
+  // ── Active section detection via IntersectionObserver (home only) ──
+  useEffect(() => {
+    if (!isHome) { setActiveHash(""); return; }
+
+    const sectionIds = NAV_LINKS.map((l) => l.href.replace("#", ""));
+    const observers  = [];
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveHash(`#${id}`);
+        },
+        // trigger when section is ≥20% visible, accounting for navbar height
+        { rootMargin: `-${NAV_HEIGHT}px 0px -60% 0px`, threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, [isHome, location.pathname]);
+
+  // ── Scroll to section with navbar offset ──
+  const scrollToSection = useCallback((hash) => {
+    const id = hash.replace("#", "");
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - NAV_HEIGHT - 12;
+    window.scrollTo({ top, behavior: "smooth" });
+    setActiveHash(hash);
+  }, []);
+
+  // ── Handle nav link click from any page ──
+  const handleNavClick = useCallback((e, href) => {
+    e.preventDefault();
+    setMenuOpen(false);
+
+    if (isHome) {
+      // Already on home — just scroll
+      scrollToSection(href);
+    } else {
+      // Navigate to home first, then scroll after paint
+      navigate("/");
+      // Use a small delay to let React render the home sections
+      setTimeout(() => scrollToSection(href), 120);
+    }
+  }, [isHome, navigate, scrollToSection]);
+
   return (
     <>
-      {/* Desktop Navbar */}
+      {/* ── Desktop Navbar ── */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between
           px-6 md:px-20 transition-all duration-300 ${
@@ -58,21 +116,38 @@ export default function Navbar() {
 
         {/* Nav Links — desktop */}
         <ul className="hidden md:flex items-center gap-1">
-          {NAV_LINKS.map(({ label, href }) => (
-            <li key={label}>
-              <a href={href}
-                className="text-[15px] text-gray-500 hover:text-gray-900 hover:bg-gray-100
-                  px-4 py-2 rounded-lg transition-all duration-150">
-                {label}
-              </a>
-            </li>
-          ))}
+          {NAV_LINKS.map(({ label, href }) => {
+            const isActive = isHome && activeHash === href;
+            return (
+              <li key={label}>
+                
+                 <a href={href}
+                  onClick={(e) => handleNavClick(e, href)}
+                  className={`text-[15px] px-4 py-2 rounded-lg transition-all duration-200
+                    font-medium relative
+                    ${isActive
+                      ? "text-[#C94B38] bg-[#C94B38]/06"
+                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                >
+                  {label}
+                  {/* Active underline dot */}
+                  {isActive && (
+                    <span
+                      className="absolute bottom-[4px] left-1/2 -translate-x-1/2
+                        w-1 h-1 rounded-full bg-[#C94B38]"
+                    />
+                  )}
+                </a>
+              </li>
+            );
+          })}
         </ul>
 
         {/* CTA + Hamburger */}
         <div className="flex items-center gap-3">
 
-          {/* Saved button with live badge */}
+          {/* Saved button */}
           <Link
             to="/saved-gifts"
             className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full
@@ -81,7 +156,6 @@ export default function Navbar() {
           >
             <Heart className="w-4 h-4" />
             Saved
-            {/* ✅ Badge now shows correct count */}
             {savedCount > 0 && (
               <span
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white
@@ -120,7 +194,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
+      {/* ── Mobile Menu ── */}
       <div
         className={`md:hidden fixed top-[68px] left-0 right-0 z-40 bg-white/95
           backdrop-blur-md border-b border-gray-100 shadow-lg px-6 pt-3 pb-5
@@ -130,13 +204,23 @@ export default function Navbar() {
             : "opacity-0 -translate-y-2 pointer-events-none"
         }`}
       >
-        {NAV_LINKS.map(({ label, href }) => (
-          <a key={label} href={href} onClick={() => setMenuOpen(false)}
-            className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50
-              px-3 py-2.5 rounded-lg transition-all duration-150">
-            {label}
-          </a>
-        ))}
+        {NAV_LINKS.map(({ label, href }) => {
+          const isActive = isHome && activeHash === href;
+          return (
+            
+            < a key={label}
+              href={href}
+              onClick={(e) => handleNavClick(e, href)}
+              className={`text-sm px-3 py-2.5 rounded-lg transition-all duration-150 font-medium
+                ${isActive
+                  ? "text-[#C94B38] bg-[#C94B38]/06"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                }`}
+            >
+              {label}
+            </a>
+          );
+        })}
 
         <Link to="/saved-gifts" onClick={() => setMenuOpen(false)}
           className="inline-flex items-center gap-2 px-5 py-3 rounded-full

@@ -241,7 +241,7 @@ const CollectionModal = ({ collection, onClose }) => {
                       </div>
 
                       {/* Name + meta */}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-20">
                         <div className="font-bold text-[0.84rem] text-[#1C1410] leading-snug line-clamp-2">
                           {p.name}
                         </div>
@@ -306,7 +306,7 @@ const CollectionModal = ({ collection, onClose }) => {
             <button
               onClick={onClose}
               className="px-5 py-3 rounded-full bg-transparent text-[#5C4A3F] font-bold
-                border-[1.5px] border-[#EDE8E3] cursor-pointer text-[0.82rem]
+                border-[1.5px] border-[#EDE8E3] cursor-pointer text-[0.8rem] sm:text-[0.82rem]
                 hover:bg-[#F6F3F0] transition-all duration-200"
             >
               Close
@@ -315,12 +315,12 @@ const CollectionModal = ({ collection, onClose }) => {
             {/* ✅ See All — reveals all 12 products on full results page */}
             <button
               onClick={handleSeeAll}
-              className="flex-1 py-3 rounded-full bg-[#E8614D] text-white font-bold
-                border-none cursor-pointer text-[0.9rem]
+              className="flex-1 py-2.5 rounded-full bg-[#E8614D] text-white font-bold
+                border-none cursor-pointer text-[0.8rem] sm:text-[0.9rem]
                 hover:bg-[#C94B38] hover:-translate-y-px transition-all duration-200"
               style={{ boxShadow: "0 8px 32px rgba(232,97,77,.28)" }}
             >
-              See All Suggestions →
+              See All Suggestions
             </button>
           </div>
 

@@ -6,17 +6,30 @@ import { searchGifts } from "../searchGifts";
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const OCCASION_LABELS = {
-  birthday:       "Birthday",
-  anniversary:    "Anniversary",
-  valentine:      "Valentine's",
-  christmas:      "Christmas",
-  graduation:     "Graduation",
-  wedding:        "Wedding",
-  "just-because": "Just Because",
+  birthday:         "Birthday",
+  anniversary:      "Anniversary",
+  valentine:        "Valentine's",
+  christmas:        "Christmas",
+  graduation:       "Graduation",
+  wedding:          "Wedding",
+  "just-because":   "Just Because",
+  "fathers-day":    "Father's Day",
+  "mothers-day":    "Mother's Day",
+  "back-to-school": "Back to School",
+  halloween:        "Halloween",
+  "baby-shower":    "Baby Shower",
+  housewarming:     "Housewarming",
+  promotion:        "Promotion",
+  engagement:       "Engagement",
+  "get-well-soon":  "Get Well Soon",
+  "thank-you":      "Thank You",
+  "last-minute":    "Last Minute",
+  farewell:         "Farewell",
+  "new-year":       "New Year",
 };
-const fmtOccasion = (o) => OCCASION_LABELS[o] || cap(o.replace("-", " "));
+const fmtOccasion = (o) => OCCASION_LABELS[o] || cap(o.replace(/-/g, " "));
 
-const CATS = [
+const ALL_CATS = [
   ["all",         "All"],
   ["jewelry",     "💍 Jewelry"],
   ["accessories", "👜 Accessories"],
@@ -50,7 +63,6 @@ function enrichWithCategory(products) {
   return products.map((p) => ({ ...p, cat: p.cat || detectCategory(p.name) }));
 }
 
-// ── sessionStorage helpers ──
 const CACHE_KEY          = "giftly_cached_results";
 const ORIGINAL_CACHE_KEY = "giftly_original_results";
 
@@ -59,12 +71,9 @@ function setCachedResults(r)   { try { sessionStorage.setItem(CACHE_KEY, JSON.st
 function getOriginalResults()  { try { return JSON.parse(sessionStorage.getItem(ORIGINAL_CACHE_KEY) || "[]"); } catch { return []; } }
 function setOriginalResults(r) { try { sessionStorage.setItem(ORIGINAL_CACHE_KEY, JSON.stringify(r)); }         catch {} }
 
-// ── localStorage saved products ──
 function getSavedProducts()       { try { return JSON.parse(localStorage.getItem("giftly_saved_products") || "[]"); } catch { return []; } }
 function setSavedProductsStore(p) { localStorage.setItem("giftly_saved_products", JSON.stringify(p)); }
 
-// ── Format Naira budget for heading ──
-// budget comes in as Naira (e.g. 20000), display as ₦20,000
 function formatBudgetHeading(budget) {
   if (!budget) return "";
   return "₦" + Number(budget).toLocaleString("en-NG");
@@ -340,7 +349,7 @@ export default function GiftResult() {
 
   const {
     age, gender, relationship, occasion,
-    budget = 0,       // ✅ This is the user's NAIRA budget — never changes
+    budget = 0,
     interests = "",
     isRerun = false,
     isCollection = false,
@@ -348,30 +357,25 @@ export default function GiftResult() {
     preloadedProducts = null,
   } = formData;
 
-  const [catFilter,       setCatFilter]       = useState("all");
-  const [saved,           setSaved]           = useState(() => getSavedProducts().map((p) => p.id));
-
-  const isReturning = sessionStorage.getItem("giftly_result_visited") === "true";
-  const cached      = getCachedResults();
-
-  const [results,         setResults]         = useState(() => isReturning ? cached : []);
-  const [seenIds,         setSeenIds]         = useState(() => isReturning ? cached.map((p) => p.id) : []);
-  const [loading,         setLoading]         = useState(!isReturning || cached.length === 0);
-  const [showMoreLoading, setShowMoreLoading] = useState(false);
-  const [isInitialLoad,   setIsInitialLoad]   = useState(!isReturning || cached.length === 0);
-  const [toast,           setToast]           = useState({ msg: "", visible: false });
-  const [apiError,        setApiError]        = useState(false);
-  const [showMoreCount,   setShowMoreCount]   = useState(0);
+  const [catFilter,        setCatFilter]        = useState("all");
+  const [saved,            setSaved]            = useState(() => getSavedProducts().map((p) => p.id));
+  const isReturning  = sessionStorage.getItem("giftly_result_visited") === "true";
+  const cached       = getCachedResults();
+  const [results,          setResults]          = useState(() => isReturning ? cached : []);
+  const [seenIds,          setSeenIds]          = useState(() => isReturning ? cached.map((p) => p.id) : []);
+  const [loading,          setLoading]          = useState(!isReturning || cached.length === 0);
+  const [showMoreLoading,  setShowMoreLoading]  = useState(false);
+  const [isInitialLoad,    setIsInitialLoad]    = useState(!isReturning || cached.length === 0);
+  const [toast,            setToast]            = useState({ msg: "", visible: false });
+  const [apiError,         setApiError]         = useState(false);
+  const [showMoreCount,    setShowMoreCount]    = useState(0);
   const [currentVariation, setCurrentVariation] = useState(0);
-
-  // ✅ FIX 1 — isShowMoreMode tracks whether we're viewing "show more" results
-  // The BUDGET HEADING never changes — it always shows the original user budget
-  const [isShowMoreMode, setIsShowMoreMode] = useState(false);
+  const [isShowMoreMode,   setIsShowMoreMode]   = useState(false);
 
   const [saveState, setSaveState] = useState(() => {
     try {
       const oLabel  = occasion ? fmtOccasion(occasion) + " " : "";
-      const heading = `Perfect ${oLabel}gifts for your ${relationship ? cap(relationship.replace("-", " ")) : "them"} under ${formatBudgetHeading(budget)}`;
+      const heading = `Perfect ${oLabel}gifts for your ${relationship ? cap(relationship.replace(/-/g, " ")) : "them"} under ${formatBudgetHeading(budget)}`;
       const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
       return searches.some((s) => s.heading === heading) ? "saved" : "idle";
     } catch { return "idle"; }
@@ -383,14 +387,8 @@ export default function GiftResult() {
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, []);
 
   useEffect(() => {
-    // ── Case 1: returning via back navigation — restore from cache ──
-    if (isReturning && cached.length > 0) {
-      setLoading(false);
-      setIsInitialLoad(false);
-      return;
-    }
+    if (isReturning && cached.length > 0) { setLoading(false); setIsInitialLoad(false); return; }
 
-    // ── Case 2: coming from a collection card — products already loaded ──
     if (preloadedProducts && preloadedProducts.length > 0) {
       const enriched = enrichWithCategory(preloadedProducts);
       setResults(enriched);
@@ -403,10 +401,8 @@ export default function GiftResult() {
       return;
     }
 
-    // ── Case 3: fresh search from form ──
     sessionStorage.setItem("giftly_result_visited", "true");
-    setLoading(true);
-    setApiError(false);
+    setLoading(true); setApiError(false);
 
     searchGifts({ age, gender, relationship, occasion, budget, interests }, 0)
       .then((products) => {
@@ -423,9 +419,7 @@ export default function GiftResult() {
       .finally(() => { setLoading(false); setIsInitialLoad(false); });
   }, []);
 
-  useEffect(() => {
-    return () => { clearTimeout(toastTimer.current); clearTimeout(unsaveTimer.current); };
-  }, []);
+  useEffect(() => { return () => { clearTimeout(toastTimer.current); clearTimeout(unsaveTimer.current); }; }, []);
 
   const showToast = useCallback((msg) => {
     setToast({ msg, visible: true });
@@ -448,19 +442,14 @@ export default function GiftResult() {
   };
 
   const occasionLabel = occasion ? fmtOccasion(occasion) + " " : "";
-  const relLabel      = relationship ? cap(relationship.replace("-", " ")) : "them";
+  const relLabel      = relationship ? cap(relationship.replace(/-/g, " ")) : "them";
 
-  // ✅ FIX 2 — Heading logic
-  // Collection: shows collection title
-  // Show More mode: shows "More ideas" without any budget
-  // Normal: shows budget in Naira — ALWAYS the original budget, never derived from product prices
   const heading = isCollection && collectionTitle
     ? collectionTitle
     : isShowMoreMode
     ? `More ${occasionLabel}gift ideas for your ${relLabel}`
     : `Perfect ${occasionLabel}gifts for your ${relLabel} under ${formatBudgetHeading(budget)}`;
 
-  // The heading used for saving always uses original form budget
   const savedHeading = `Perfect ${occasionLabel}gifts for your ${relLabel} under ${formatBudgetHeading(budget)}`;
 
   const handleSaveSearch = () => {
@@ -473,10 +462,7 @@ export default function GiftResult() {
       }
       setSaveState("saved"); showToast("🔖 Search saved!"); return;
     }
-    if (saveState === "saved") {
-      setSaveState("confirming"); clearTimeout(unsaveTimer.current);
-      unsaveTimer.current = setTimeout(() => setSaveState("saved"), 4000); return;
-    }
+    if (saveState === "saved") { setSaveState("confirming"); clearTimeout(unsaveTimer.current); unsaveTimer.current = setTimeout(() => setSaveState("saved"), 4000); return; }
     if (saveState === "confirming") {
       clearTimeout(unsaveTimer.current);
       const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
@@ -507,21 +493,17 @@ export default function GiftResult() {
       setCachedResults(toShow);
       setShowMoreCount(nextVariation);
       setCurrentVariation(nextVariation);
-      // ✅ Switch to "show more" mode — heading drops the budget
       setIsShowMoreMode(true);
       showToast(`✨ Found ${toShow.length} more ideas for your ${relLabel}!`);
     } catch { showToast("Couldn't load more — try again"); }
     finally { setShowMoreLoading(false); }
   };
 
-  // ✅ FIX 3 — Back to original: restores original results AND resets heading back
-  // to normal mode with correct budget — NO re-fetch, NO random price
   const handleBackToOriginal = () => {
     const original = getOriginalResults();
     if (original.length > 0) {
       setResults(original);
       setCachedResults(original);
-      // ✅ Reset show more mode — heading goes back to showing original Naira budget
       setIsShowMoreMode(false);
       setCurrentVariation(0);
       setShowMoreCount(0);
@@ -531,8 +513,29 @@ export default function GiftResult() {
     }
   };
 
-  const filtered = catFilter === "all" ? results : results.filter((p) => (p.cat || "gifts") === catFilter);
-  const catCounts = results.reduce((acc, p) => { const c = p.cat || "gifts"; acc[c] = (acc[c] || 0) + 1; return acc; }, {});
+  // ✅ Compute category counts from results
+  const catCounts = results.reduce((acc, p) => {
+    const c = p.cat || "gifts";
+    acc[c] = (acc[c] || 0) + 1;
+    return acc;
+  }, {});
+
+  // ✅ Only show tabs that have at least 1 product — always include "All"
+  const visibleCats = ALL_CATS.filter(([val]) => {
+    if (val === "all") return true;
+    return (catCounts[val] || 0) > 0;
+  });
+
+  const filtered = catFilter === "all"
+    ? results
+    : results.filter((p) => (p.cat || "gifts") === catFilter);
+
+  // ✅ If current tab becomes empty after filter change, reset to all
+  useEffect(() => {
+    if (catFilter !== "all" && filtered.length === 0 && results.length > 0) {
+      setCatFilter("all");
+    }
+  }, [results]);
 
   const loadingPhrases = isRerun
     ? [`Re-running your saved search…`, `Finding fresh ideas for your ${relLabel}…`, `Almost ready for you…`]
@@ -551,13 +554,11 @@ export default function GiftResult() {
             {loading ? "Searching live products…" : `${results.length} personalized suggestions`}
           </div>
 
-          {/* ✅ Heading — shows Naira budget when in normal mode, "More ideas" when in show more mode */}
           <h1 className="text-[clamp(1.8rem,3.5vw,2.8rem)] font-syne leading-[1.12] tracking-[-0.03em] text-[#1C1410] mb-[10px]"
             style={{ fontFamily: "'Fraunces','Georgia',serif" }}>
             {heading}
           </h1>
 
-          {/* ✅ Show More mode info bar — no random budget, just a back button */}
           {isShowMoreMode && (
             <div className="flex items-center gap-3 mb-4 flex-wrap">
               <span className="text-[0.78rem] font-semibold text-[#9C8B82]">
@@ -572,13 +573,13 @@ export default function GiftResult() {
           )}
 
           <p className="text-[0.95rem] text-[#5C4A3F] mb-6">
-            Based on your preferences, here are thoughtful ideas for your {relLabel} 
+            Based on your preferences, here are thoughtful ideas for your {relLabel} 💖
           </p>
 
           <div className="flex items-center justify-between flex-wrap gap-3 pb-6 border-b border-[#F6F3F0]">
-            {/* Category tabs */}
+            {/* ✅ Only show tabs with products */}
             <div className="flex gap-2 overflow-x-auto flex-nowrap pb-1">
-              {CATS.map(([val, label]) => {
+              {visibleCats.map(([val, label]) => {
                 const count    = val === "all" ? results.length : (catCounts[val] || 0);
                 const isActive = catFilter === val;
                 return (
@@ -649,23 +650,6 @@ export default function GiftResult() {
                   style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", fontFamily: "'Syne',sans-serif" }}>Refine Search 🎁</button>
               </div>
             )}
-            {!isInitialLoad && !apiError && results.length > 0 && filtered.length === 0 && catFilter !== "all" && (
-              <div className="text-center py-20">
-                <span className="text-[4.5rem] block mb-6">🔍</span>
-                <h3 className="text-[1.6rem] font-syne text-[#1C1410] mb-3" style={{ fontFamily: "'Fraunces','Georgia',serif" }}>
-                  No {CATS.find(c => c[0] === catFilter)?.[1]} found
-                </h3>
-                <p className="text-[#5C4A3F] mb-6">No results in this category. Try another tab or show more ideas.</p>
-                <div className="flex gap-3 justify-center flex-wrap">
-                  <button onClick={() => setCatFilter("all")}
-                    className="px-6 py-3 rounded-full font-bold text-[0.9rem] border-none cursor-pointer hover:opacity-90"
-                    style={{ background: "#1C1410", color: "white", fontFamily: "'Syne',sans-serif" }}>Show All</button>
-                  <button onClick={handleShowMore}
-                    className="px-6 py-3 rounded-full font-bold text-[0.9rem] border-none cursor-pointer hover:opacity-90"
-                    style={{ background: "linear-gradient(135deg,#F0A830,#f5c060)", color: "#1C1410", fontFamily: "'Syne',sans-serif" }}>✨ Show More Ideas</button>
-                </div>
-              </div>
-            )}
             {!isInitialLoad && !apiError && filtered.length > 0 && (
               <AnimatePresence mode="wait">
                 <motion.div key={catFilter + currentVariation + results.map(r => r.id).join("-")}
@@ -677,7 +661,7 @@ export default function GiftResult() {
                         items={g.items} saved={saved} onFav={handleFav} />
                     ))
                   ) : (
-                    <ProductGroup title={CATS.find(c => c[0] === catFilter)?.[1] || ""}
+                    <ProductGroup title={ALL_CATS.find(c => c[0] === catFilter)?.[1] || ""}
                       badge={`${filtered.length} item${filtered.length !== 1 ? "s" : ""}`}
                       badgeBg="rgba(232,97,77,.1)" badgeColor="#E8614D"
                       items={filtered} saved={saved} onFav={handleFav} />

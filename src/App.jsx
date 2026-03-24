@@ -14,6 +14,8 @@ import Navbar      from './components/Navbar'
 import GenerateGift from './external pages/GenerateGift';
 import GiftResult   from './external pages/GiftResult';
 import SavedGifts   from './external pages/SavedGifts';
+// import BlogList from './external pages/BlogList';
+// import BlogPost from './external pages/BlogPosts';
 
 
 function App() {
@@ -44,6 +46,8 @@ function App() {
         {/* Saved Gifts Page */}
         <Route path="/saved-gifts" element={<SavedGifts />} />
 
+      {/* <Route path="/blog" element={<BlogList />} />
+      <Route path="/blog/:slug" element={<BlogPosts />} /> */}
 
       </Routes>
 

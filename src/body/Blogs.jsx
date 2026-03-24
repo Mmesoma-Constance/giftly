@@ -5,7 +5,7 @@ import { blogPosts } from "./../data/blogs";
 
 const Blogs = () => {
   return (
-    <section className="py-20 md:py-28 bg-secondary/50">
+    <section className="py-20 md:py-28 bg-secondary/50 scroll-mt-21">
       <div className="container mx-auto px-6">
 
         {/* 🔥 HEADING */}
@@ -87,7 +87,7 @@ const Blogs = () => {
         </div>
         <div className="flex justify-center items-center mt-8">
   <Link
-    to="/generator"
+    to="/blog"
     className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full mt-10
     text-sm sm:text-base text-[#C94B38] border border-[#C94B38] font-semibold 
     hover:opacity-90 transition-all hover:bg-[#C94B38] hover:text-white hover:shadow-glow hover:scale-[1.02]"
