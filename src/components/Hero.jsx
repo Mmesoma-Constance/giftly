@@ -36,7 +36,7 @@ const Hero = () => {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a
-                href="#examples"
+                href="#collections"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border-2 border-border text-foreground font-semibold hover:bg-secondary transition-all hover:scale-[1.02]"
               >
                 See Examples

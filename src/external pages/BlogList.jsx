@@ -1,20 +1,26 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { blogPosts } from "./BlogPosts";
+import { blogPosts } from "./../data/blogs";
 
 export default function BlogList() {
   const navigate = useNavigate();
+
+  // ── Always start at the top of the page ──
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
 
   return (
     <div
       className="min-h-screen w-full mt-20"
       style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}
     >
-      {/* ── Back bar ── */}
+      {/* Back bar */}
       <div className="max-w-6xl mx-auto px-5 pt-14">
         <button
           onClick={() => navigate("/")}
           className="inline-flex items-center gap-2 text-sm font-bold text-[#2C1A12]/70
-            px-4 py-2.5 rounded-full border border-[#2C1A12]/15 bg-white
+            px-4 py-2.5 rounded-full border border-[#2C1A12]/15 bg-white cursor-pointer
             hover:text-[#2C1A12] hover:border-[#2C1A12]/30 hover:-translate-x-0.5
             transition-all duration-200"
           style={{ boxShadow: "0 2px 8px rgba(44,26,18,.07)" }}
@@ -23,7 +29,7 @@ export default function BlogList() {
         </button>
       </div>
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="max-w-6xl mx-auto px-5 pt-10 pb-4 text-center">
         <span
           className="inline-block text-xs font-bold tracking-[.18em] uppercase mb-4
@@ -43,11 +49,15 @@ export default function BlogList() {
         </p>
       </div>
 
-      {/* ── Grid ── */}
+      {/* Grid */}
       <div className="max-w-6xl mx-auto px-5 pb-24">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogPosts.map((post) => (
-            <BlogCard key={post.slug} post={post} onClick={() => navigate(`/blog/${post.slug}`)} />
+            <BlogCard
+              key={post.slug}
+              post={post}
+              onClick={() => navigate(`/blog/${post.slug}`)}
+            />
           ))}
         </div>
       </div>
@@ -70,24 +80,26 @@ function BlogCard({ post, onClick }) {
       onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 16px 48px rgba(44,26,18,.14),0 2px 8px rgba(44,26,18,.06)")}
       onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 4px 24px rgba(44,26,18,.07),0 1px 4px rgba(44,26,18,.04)")}
     >
-      {/* Hero area */}
-      <div
-        className="w-full h-44 flex items-center justify-center text-6xl"
-        style={{ background: post.bg }}
-      >
-        {post.icon}
-      </div>
-
-      {/* Body */}
-      <div className="p-6">
+      {/* Real image */}
+      <div className="relative w-full h-44 overflow-hidden">
+        <img
+          src={post.image}
+          alt={post.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+        {/* Tag overlay on image */}
         <span
-          className="inline-block text-[.68rem] font-black tracking-[.12em] uppercase
-            px-3 py-1 rounded-full mb-3"
-          style={{ background: "rgba(232,97,77,.09)", color: "#E8614D" }}
+          className="absolute top-3 left-3 text-[.65rem] tracking-[.1em] uppercase
+            px-2.5 py-1 rounded-full"
+          style={{ background: "rgba(255,255,255,.92)", color: "#E8614D" }}
         >
           {post.tag}
         </span>
+      </div>
 
+      {/* Body */}
+      <div className="p-5">
         <h2
           className="text-[1.05rem] font-black text-[#2C1A12] leading-snug mb-2 line-clamp-2
             group-hover:text-[#E8614D] transition-colors duration-200"
@@ -106,7 +118,7 @@ function BlogCard({ post, onClick }) {
             <p className="text-[.7rem] text-[#2C1A12]/40">{post.date} · {post.readTime}</p>
           </div>
           <span
-            className="text-xs font-black text-[#E8614D] tracking-wide
+            className="text-xs font-bold text-[#E8614D] tracking-wide
               group-hover:translate-x-1 transition-transform duration-200"
           >
             Read →

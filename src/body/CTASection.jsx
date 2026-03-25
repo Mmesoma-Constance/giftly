@@ -16,16 +16,19 @@ const CTASection = () => {
         Join 50,000+ happy gifters who never stress about presents again.
       </p>
       <div className="flex gap-[14px] justify-center flex-wrap">
-        <button onClick={() => go('generator')}
-          className="inline-flex items-center justify-center text-white bg-[#C94B38] font-bold text-[1rem] px-9 py-3 sm:py-4.25
-            rounded-full border-none cursor-pointer shadow-rose hover:bg-rose-dark hover:-translate-y-0.5 transition-all">
-          Try It Now 
-        </button>
-        <button onClick={() => scrollTo_('how-it-works')}
+       <Link
+                to="/generate-gift"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full 
+                text-white bg-[#C94B38] font-semibold hover:opacity-90 transition-all hover:shadow-glow hover:scale-[1.02]"
+              >
+                Try It Now
+                
+              </Link>
+        <a href="#how-it-works"
           className="inline-flex items-center justify-center bg-white text-ink font-bold text-[1rem] px-9 py-3 sm:py-4.25 
             rounded-full border-[1.5px] border-ink-15 cursor-pointer shadow-s1 hover:border-ink-30 hover:-translate-y-0.5 hover:shadow-s2 transition-all">
           How It Works
-        </button>
+        </a>
       </div>
     </section>
   );
