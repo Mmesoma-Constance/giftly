@@ -37,7 +37,6 @@ const AGES = [
 
 const GENDERS = ["female", "male", "nonbinary"];
 
-// ✅ Updated occasions pool for Surprise Me
 const OCCASIONS = [
   "birthday", "anniversary", "valentine", "christmas", "graduation",
   "wedding", "just-because", "fathers-day", "mothers-day",
@@ -68,6 +67,22 @@ const INTEREST_POOL = [
   "volunteering", "entrepreneurship",
 ];
 
+// ✅ Currency config — rate = how many local units = $1 USD
+// Update the rates periodically or fetch live if you have an API
+const CURRENCIES = [
+  { code: "NGN", symbol: "₦", name: "Nigerian Naira",    rate: 1580,  budgetMin: 2000,    budgetMax: 500000,  budgetDefault: 20000,  step: 1000  },
+  { code: "GHS", symbol: "₵", name: "Ghanaian Cedi",     rate: 15.5,  budgetMin: 20,      budgetMax: 5000,    budgetDefault: 200,    step: 10    },
+  { code: "KES", symbol: "KSh", name: "Kenyan Shilling", rate: 129,   budgetMin: 200,     budgetMax: 65000,   budgetDefault: 2000,   step: 100   },
+  { code: "ZAR", symbol: "R",  name: "South African Rand",rate: 18.5, budgetMin: 50,      budgetMax: 10000,   budgetDefault: 500,    step: 50    },
+  { code: "GBP", symbol: "£",  name: "British Pound",     rate: 0.79,  budgetMin: 5,       budgetMax: 2000,    budgetDefault: 50,     step: 5     },
+  { code: "EUR", symbol: "€",  name: "Euro",              rate: 0.92,  budgetMin: 5,       budgetMax: 2000,    budgetDefault: 50,     step: 5     },
+  { code: "USD", symbol: "$",  name: "US Dollar",         rate: 1,     budgetMin: 5,       budgetMax: 1000,    budgetDefault: 30,     step: 5     },
+];
+
+function toUSD(amount, rate) {
+  return (amount / rate).toFixed(2);
+}
+
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function pickMultiple(arr, min = 2, max = 4) {
@@ -76,80 +91,83 @@ function pickMultiple(arr, min = 2, max = 4) {
   return shuffled.slice(0, count).join(", ");
 }
 
-function generateRandomProfile() {
+function generateRandomProfile(currency) {
   const gender = pick(GENDERS);
   const relationshipPool =
     gender === "female"   ? RELATIONSHIPS_FEMALE    :
     gender === "male"     ? RELATIONSHIPS_MALE      :
     RELATIONSHIPS_NONBINARY;
+  // Pick a random budget within the currency's range
+  const randomBudget = pick(BUDGETS.map(b => Math.round((b / 1580) * currency.rate / currency.step) * currency.step)
+    .filter(b => b >= currency.budgetMin && b <= currency.budgetMax));
   return {
     age:          pick(AGES),
     gender,
     relationship: pick(relationshipPool),
     occasion:     pick(OCCASIONS),
-    budget:       pick(BUDGETS),
+    budget:       randomBudget || currency.budgetDefault,
     interests:    pickMultiple(INTEREST_POOL, 2, 4),
   };
 }
 
-const BUDGET_MIN     = 2000;
-const BUDGET_MAX     = 100000;
-const BUDGET_DEFAULT = 20000;
-
-function formatNaira(val) {
-  return "₦" + Number(val).toLocaleString("en-NG");
-}
-
-// ✅ Format number with commas for the input display
 function formatWithCommas(val) {
   if (!val && val !== 0) return "";
   return Number(val).toLocaleString("en-NG");
 }
 
-// ✅ Strip commas to get raw number
 function stripCommas(val) {
   return val.replace(/,/g, "");
 }
 
-function sliderPercent(val) {
-  return ((val - BUDGET_MIN) / (BUDGET_MAX - BUDGET_MIN)) * 100;
+function sliderPercent(val, min, max) {
+  return ((val - min) / (max - min)) * 100;
 }
 
 export default function GenerateGift() {
   const navigate = useNavigate();
+
+  // ✅ Currency state
+  const [currencyCode,  setCurrencyCode]  = useState("NGN");
+  const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
+
   const [age,           setAge]           = useState("");
   const [gender,        setGender]        = useState("");
   const [relationship,  setRelationship]  = useState("");
   const [occasion,      setOccasion]      = useState("");
-  const [budget,        setBudget]        = useState(BUDGET_DEFAULT);
-  // ✅ Separate display value for the budget input (shows commas)
-  const [budgetDisplay, setBudgetDisplay] = useState(formatWithCommas(BUDGET_DEFAULT));
+  const [budget,        setBudget]        = useState(currency.budgetDefault);
+  const [budgetDisplay, setBudgetDisplay] = useState(formatWithCommas(currency.budgetDefault));
   const [interests,     setInterests]     = useState("");
   const [shaking,       setShaking]       = useState(false);
   const sliderRef = useRef(null);
 
-  const pct = sliderPercent(budget);
+  const pct = sliderPercent(budget, currency.budgetMin, currency.budgetMax);
+  const usdEquivalent = toUSD(budget, currency.rate);
 
-  // ✅ When slider changes — update both raw budget and display
+  // ✅ When currency changes, reset budget to new default
+  function handleCurrencyChange(code) {
+    const newCurrency = CURRENCIES.find(c => c.code === code) || CURRENCIES[0];
+    setCurrencyCode(code);
+    setBudget(newCurrency.budgetDefault);
+    setBudgetDisplay(formatWithCommas(newCurrency.budgetDefault));
+  }
+
   function syncFromSlider(v) {
     const n = Number(v);
     setBudget(n);
     setBudgetDisplay(formatWithCommas(n));
   }
 
-  // ✅ When user types in input — strip commas, validate, reformat
   function handleBudgetInputChange(e) {
     const raw     = stripCommas(e.target.value);
     const numeric = raw.replace(/[^0-9]/g, "");
     if (numeric === "") { setBudgetDisplay(""); return; }
-    const n = Math.min(BUDGET_MAX, Number(numeric));
+    const n = Math.min(currency.budgetMax, Number(numeric));
     setBudget(n);
     setBudgetDisplay(formatWithCommas(n));
   }
 
-  // ✅ On blur — enforce min value and reformat
   function handleBudgetInputBlur() {
-    const clamped = Math.max(BUDGET_MIN, budget || BUDGET_MIN);
+    const clamped = Math.max(currency.budgetMin, budget || currency.budgetMin);
     setBudget(clamped);
     setBudgetDisplay(formatWithCommas(clamped));
   }
@@ -162,7 +180,7 @@ export default function GenerateGift() {
   }
 
   function surpriseMe() {
-    const p = generateRandomProfile();
+    const p = generateRandomProfile(currency);
     setAge(p.age);
     setGender(p.gender);
     setRelationship(p.relationship);
@@ -176,15 +194,25 @@ export default function GenerateGift() {
 
   function clearForm() {
     setAge(""); setGender(""); setRelationship("");
-    setOccasion(""); setBudget(BUDGET_DEFAULT);
-    setBudgetDisplay(formatWithCommas(BUDGET_DEFAULT)); setInterests("");
+    setOccasion(""); setBudget(currency.budgetDefault);
+    setBudgetDisplay(formatWithCommas(currency.budgetDefault)); setInterests("");
   }
 
   function handleSubmit() {
     if (!age || !gender || !relationship || !budget) return;
     sessionStorage.removeItem("giftly_result_visited");
     sessionStorage.removeItem("giftly_cached_results");
-    navigate("/result", { state: { age, gender, relationship, occasion, budget, interests } });
+    // ✅ Pass budgetUSD so the result page can filter by dollar value
+    navigate("/result", {
+      state: {
+        age, gender, relationship, occasion,
+        budget,
+        budgetUSD: parseFloat(usdEquivalent),
+        currency: currency.code,
+        currencySymbol: currency.symbol,
+        interests,
+      }
+    });
   }
 
   const valid = age && gender && relationship && budget;
@@ -248,7 +276,7 @@ export default function GenerateGift() {
               </SelectInput>
             </FormGroup>
 
-            {/* ✅ Updated Occasion — all new occasions added */}
+            {/* Occasion */}
             <FormGroup label="Occasion">
               <SelectInput value={occasion} onChange={setOccasion}>
                 <option value="">Select occasion (optional)</option>
@@ -281,40 +309,91 @@ export default function GenerateGift() {
               </SelectInput>
             </FormGroup>
 
-            {/* ✅ Budget — shows commas in input */}
+            {/* ✅ Budget — now with currency selector + USD conversion */}
             <div className="sm:col-span-2 flex flex-col gap-2">
-              <label className="text-base font-syne tracking-wide text-[#2C1A12] uppercase">
-                Budget <span className="text-[#E8614D]">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-base font-syne tracking-wide text-[#2C1A12] uppercase">
+                  Budget <span className="text-[#E8614D]">*</span>
+                </label>
+                {/* ✅ Currency Selector */}
+                <div className="relative">
+                  <select
+                    value={currencyCode}
+                    onChange={e => handleCurrencyChange(e.target.value)}
+                    className="text-[.8rem] font-bold text-[#2C1A12] bg-[#FAF7F2] border border-[#2C1A12]/15
+                      rounded-lg px-3 py-1.5 pr-7 appearance-none cursor-pointer outline-none
+                      focus:border-[#E8614D] transition-colors"
+                  >
+                    {CURRENCIES.map(c => (
+                      <option key={c.code} value={c.code}>
+                        {c.symbol} {c.code}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#2C1A12]/40">
+                    <svg width="10" height="6" viewBox="0 0 12 7" fill="none">
+                      <path d="M1 1l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black
-                  text-[#2C1A12]/40 text-sm pointer-events-none select-none">₦</span>
-                {/* ✅ Text input shows formatted value with commas */}
+                  text-[#2C1A12]/40 text-sm pointer-events-none select-none">
+                  {currency.symbol}
+                </span>
                 <input
                   type="text"
                   inputMode="numeric"
                   value={budgetDisplay}
                   onChange={handleBudgetInputChange}
                   onBlur={handleBudgetInputBlur}
-                  placeholder="e.g. 20,000"
+                  placeholder={`e.g. ${formatWithCommas(currency.budgetDefault)}`}
                   className={inputCls + " pl-8"}
                 />
               </div>
+
               <div className="mt-1">
-                <input ref={sliderRef} type="range"
-                  min={BUDGET_MIN} max={BUDGET_MAX} step={1000} value={budget}
+                <input
+                  ref={sliderRef}
+                  type="range"
+                  min={currency.budgetMin}
+                  max={currency.budgetMax}
+                  step={currency.step}
+                  value={budget}
                   onChange={e => syncFromSlider(e.target.value)}
                   className="w-full h-[5px] rounded-full outline-none cursor-pointer appearance-none"
                   style={{
                     background: `linear-gradient(to right,#E8614D ${pct}%,rgba(44,26,18,.12) ${pct}%)`,
                     WebkitAppearance: "none",
-                  }} />
+                  }}
+                />
                 <div className="flex justify-between mt-2 text-[.72rem] font-bold text-[#2C1A12]/40 tracking-wide">
-                  <span>₦2,000</span><span>₦50,000</span><span>₦100,000</span>
+                  <span>{currency.symbol}{formatWithCommas(currency.budgetMin)}</span>
+                  <span>{currency.symbol}{formatWithCommas(Math.round((currency.budgetMin + currency.budgetMax) / 2))}</span>
+                  <span>{currency.symbol}{formatWithCommas(currency.budgetMax)}</span>
                 </div>
-                <div className="text-center mt-1 text-xl font-black"
-                  style={{ fontFamily: "'Fraunces','Georgia',serif", color: "#E8614D" }}>
-                  {formatNaira(budget)}
+
+                {/* ✅ Budget display + USD conversion */}
+                <div className="text-center mt-2">
+                  <div className="text-xl font-black"
+                    style={{ fontFamily: "'Fraunces','Georgia',serif", color: "#E8614D" }}>
+                    {currency.symbol}{formatWithCommas(budget)}
+                  </div>
+                  {/* ✅ Only show USD conversion if not already in USD */}
+                  {currency.code !== "USD" && (
+                    <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+                      bg-[#F0F7FF] border border-[#DBEAFE]">
+                      <span className="text-[.72rem] text-[#3B82F6]/70">≈</span>
+                      <span className="text-[.78rem] font-bold text-[#2563EB]">
+                        ${usdEquivalent} USD
+                      </span>
+                      <span className="text-[.68rem] text-[#3B82F6]/50">
+                        · store prices are in dollars
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -340,12 +419,12 @@ export default function GenerateGift() {
               style={{ background: "linear-gradient(135deg,rgba(232,97,77,.04),rgba(240,168,48,.04))" }}>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#2C1A12]/60 leading-snug">
-                   <strong className="text-[#2C1A12]/80">Not sure?</strong>{" "}
+                  <strong className="text-[#2C1A12]/80">Not sure?</strong>{" "}
                   We'll generate a completely random profile — every click is different!
                 </p>
                 {age && gender && relationship && (
                   <p className="text-[0.72rem] text-[#E8614D] font-semibold mt-1.5">
-                    → {age}yr {gender} · {relationship} · {occasion || "no occasion"} · ₦{Number(budget).toLocaleString()}
+                    → {age}yr {gender} · {relationship} · {occasion || "no occasion"} · {currency.symbol}{Number(budget).toLocaleString()}
                   </p>
                 )}
               </div>

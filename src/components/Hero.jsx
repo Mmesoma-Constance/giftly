@@ -1,11 +1,24 @@
 import { motion } from "motion/react";
-import { ArrowRight, Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import heroGift from "./../assets/images.png";
 
+const NAV_HEIGHT = 72;
+
 const Hero = () => {
+  const navigate = useNavigate();
+
+  function handleSeeExamples(e) {
+    e.preventDefault();
+    const el = document.getElementById("collections");
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - NAV_HEIGHT - 12;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  }
+
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden" 
+    <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden md:px-20" 
      style={{ background: 'linear-gradient(135deg,rgba(232,97,77,.05),rgba(240,168,48,.05))' }}>
      
       <div className="container mx-auto px-6">
@@ -15,17 +28,16 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-           
             <h1 className="font-fraunces text-4xl md:text-6xl font-extrabold text-foreground leading-tighter mb-6">
               Find the  <span className="text-[#E8614D] ">Perfect</span>  Gift in{" "}
-             
-               <span className="relative after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-1
+              <span className="relative after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-1
                 after:h-1 after:bg-linear-to-r after:from-[#C94B38] after:to-[#EE8070] after:rounded">
-    Seconds
-  </span>
+                Seconds
+              </span>
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-lg">
-              Stop stressing over gift ideas. Giftly uses smart AI logic to suggest thoughtful, personalized gifts for any person, any occasion — within your budget. </p>
+              Stop stressing over gift ideas. Giftly uses smart AI logic to suggest thoughtful, personalized gifts for any person, any occasion — within your budget.
+            </p>
             <div className="flex flex-wrap gap-4">
               <Link
                 to="/generate-gift"
@@ -35,8 +47,10 @@ const Hero = () => {
                 Try It Now
                 <ArrowRight className="w-4 h-4" />
               </Link>
+              {/* See Examples — smooth scrolls to #collections */}
               <a
                 href="#collections"
+                onClick={handleSeeExamples}
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border-2 border-border text-foreground font-semibold hover:bg-secondary transition-all hover:scale-[1.02]"
               >
                 See Examples
@@ -54,7 +68,6 @@ const Hero = () => {
               <div className="absolute -inset-8 bg-primary/10 rounded-full blur-3xl" />
               <img src={heroGift} alt="Gift box" className="relative w-80 md:w-96 animate-float" />
             </div>
-            {/* Floating product cards */}
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}

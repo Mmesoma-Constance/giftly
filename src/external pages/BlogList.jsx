@@ -119,7 +119,7 @@ function BlogCard({ post, onClick }) {
           </div>
           <span
             className="text-xs font-bold text-[#E8614D] tracking-wide
-              group-hover:translate-x-1 transition-transform duration-200"
+              group-hover:translate-x-1  transition-transform duration-200"
           >
             Read →
           </span>

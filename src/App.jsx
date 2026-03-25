@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 
 import Blogs       from './body/Blogs'
 import Collections from './body/Collections'
@@ -16,14 +16,19 @@ import GiftResult   from './external pages/GiftResult';
 import SavedGifts   from './external pages/SavedGifts';
 import BlogList from './external pages/BlogList';
 import BlogPost from './external pages/BlogPost';
+import PrivacyPolicy, { AboutUs, Contact, CookiePolicy, TermsOfUse } from './external pages/LegalPages';
+import ScrollToTop from './ScrollToTop';
 
 
 function App() {
   return (
-    <>
+  
+     <BrowserRouter>
       <Navbar />
-
+  
+   <ScrollToTop/>
       <Routes>
+    
         {/* Landing Page */}
         <Route path="/" element={
           <>
@@ -49,11 +54,17 @@ function App() {
       <Route path="/blog" element={<BlogList />} />
       <Route path="/blog/:slug" element={<BlogPost />} />
 
+      <Route path="/privacy"  element={<PrivacyPolicy />} />
+<Route path="/terms"    element={<TermsOfUse />} />
+<Route path="/cookies"  element={<CookiePolicy />} />
+<Route path="/about"    element={<AboutUs />} />
+<Route path="/contact"  element={<Contact />} />
+
       </Routes>
 
-
-      <Footer />
-    </>
+   
+      <Footer /> </BrowserRouter>
+    
   )
 }
 

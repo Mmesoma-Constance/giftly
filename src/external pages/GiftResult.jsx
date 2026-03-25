@@ -472,9 +472,9 @@ export default function GiftResult() {
   };
 
   const saveButtonConfig = {
-    idle:       { label: "🔖 Save This Search", bg: "#1C1410", color: "white" },
-    saved:      { label: "✅ Saved!",            bg: "#7A9E7E", color: "white" },
-    confirming: { label: "❌ Unsave Search?",    bg: "#E8614D", color: "white" },
+    idle:       { label: "Save This Search", bg: "#1C1410", color: "white" },
+    saved:      { label: "Saved!",            bg: "#7A9E7E", color: "white" },
+    confirming: { label: "Unsave Search?",    bg: "#E8614D", color: "white" },
   }[saveState];
 
   const handleShowMore = async () => {
@@ -546,7 +546,7 @@ export default function GiftResult() {
       <GiftLoadingOverlay show={loading} phrases={loadingPhrases} />
       <Toast msg={toast.msg} visible={toast.visible} />
 
-      <div className="bg-white px-5 pt-10 pb-0 border-b border-[#EDE8E3]">
+      <div className="bg-white px-5 md:px-20 pt-10 pb-0 border-b border-[#EDE8E3]">
         <div className="max-w-[1320px] mx-auto">
 
           <div className="inline-flex items-center gap-2 px-[14px] py-[6px] rounded-full font-bold text-[0.78rem] mb-4"
@@ -600,7 +600,7 @@ export default function GiftResult() {
               })}
             </div>
 
-            <div className="flex gap-2 flex-wrap flex-shrink-0">
+            <div className="flex gap-2 flex-wrap shrink-0 overflow-hidden">
               <button onClick={handleShowMore} disabled={showMoreLoading || loading}
                 className="flex items-center gap-2 px-[18px] py-[9px] rounded-full font-bold
                   text-[0.82rem] border-none cursor-pointer transition-all duration-200
@@ -608,11 +608,13 @@ export default function GiftResult() {
                 style={{ background: (showMoreLoading || loading) ? "#EDE8E3" : "linear-gradient(135deg,#F0A830,#f5c060)", fontFamily: "'Syne',sans-serif" }}>
                 {showMoreLoading ? (
                   <><span className="w-3.5 h-3.5 rounded-full border-2 border-[#1C1410]/30 border-t-[#1C1410] inline-block" style={{ animation: "spin .7s linear infinite" }} />Searching…</>
-                ) : "✨ Show More Ideas"}
+                ) : " Show More Ideas"}
               </button>
               <button onClick={handleSaveSearch}
                 className="px-[18px] py-[9px] rounded-full font-bold text-[0.82rem] border-none cursor-pointer transition-all duration-200"
-                style={{ background: saveButtonConfig.bg, color: saveButtonConfig.color, fontFamily: "'Syne',sans-serif", animation: saveState === "confirming" ? "savePulse 1s ease-in-out infinite" : "none" }}>
+
+                style={{ background: saveButtonConfig.bg, color: saveButtonConfig.color, fontFamily: "'Syne',sans-serif",
+                 animation: saveState === "confirming" ? "savePulse 1s ease-in-out infinite" : "none" }}>
                 {saveButtonConfig.label}
               </button>
             </div>
@@ -620,7 +622,7 @@ export default function GiftResult() {
         </div>
       </div>
 
-      <div className="max-w-[1320px] mx-auto px-5 pb-20">
+      <div className="max-w-[1320px] mx-auto px-5 md:px-20 pb-20">
         {showMoreLoading && (
           <AnimatePresence>
             <motion.div key="skeletons" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
@@ -637,7 +639,7 @@ export default function GiftResult() {
                 <p className="text-[#5C4A3F] mb-8">There was a problem connecting. Please try again.</p>
                 <button onClick={() => navigate("/generate-gift")}
                   className="px-7 py-3.5 rounded-full font-bold text-white text-[0.95rem] border-none cursor-pointer hover:opacity-90"
-                  style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", fontFamily: "'Syne',sans-serif" }}>Try Again 🎁</button>
+                  style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", fontFamily: "'Syne',sans-serif" }}>Try Again</button>
               </div>
             )}
             {!isInitialLoad && !apiError && !results.length && (
@@ -647,7 +649,7 @@ export default function GiftResult() {
                 <p className="text-[#5C4A3F] mb-8">Try adjusting your search or increasing your budget.</p>
                 <button onClick={() => navigate("/generate-gift")}
                   className="px-7 py-3.5 rounded-full font-bold text-white text-[0.95rem] border-none cursor-pointer hover:opacity-90"
-                  style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", fontFamily: "'Syne',sans-serif" }}>Refine Search 🎁</button>
+                  style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", fontFamily: "'Syne',sans-serif" }}>Refine Search</button>
               </div>
             )}
             {!isInitialLoad && !apiError && filtered.length > 0 && (

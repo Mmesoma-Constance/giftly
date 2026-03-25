@@ -88,14 +88,16 @@ const Collection = () => {
   const [productsMap,   setProductsMap]   = useState({});
   const [loadingImages, setLoadingImages] = useState(true);
 
-  // ✅ Refs for drag-to-scroll + auto-scroll
-  const trackRef       = useRef(null);
-  const isDragging     = useRef(false);
-  const dragStartX     = useRef(0);
-  const dragScrollLeft = useRef(0);
-  const autoScrollRef  = useRef(null);
-  const pauseTimeout   = useRef(null);
-  const isPaused       = useRef(false);
+  const trackRef        = useRef(null);
+  const isDragging      = useRef(false);
+  const dragStartX      = useRef(0);
+  const dragStartOffset = useRef(0);    // offset at the moment drag began
+  const offsetRef       = useRef(0);    // ✅ THE single source of truth for scroll position
+  const autoScrollRef   = useRef(null);
+  const pauseTimeout    = useRef(null);
+  const isPaused        = useRef(false);
+  // ✅ Track whether the pointer moved enough to count as a drag (vs a click)
+  const didDrag         = useRef(false);
 
   useEffect(() => {
     fetchAllCollectionProducts()
@@ -104,21 +106,19 @@ const Collection = () => {
       .finally(() => setLoadingImages(false));
   }, []);
 
-  // ✅ Auto-scroll logic using requestAnimationFrame — smooth & pauseable
+  // ✅ Auto-scroll — reads & writes offsetRef directly, no separate variable
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
 
-    let offset = 0;
-    const speed = 0.6; // px per frame — tweak for faster/slower
+    const speed = 0.6;
 
     function step() {
       if (!isPaused.current && track) {
-        offset += speed;
-        // Reset to 0 when halfway through (since we doubled the list)
+        offsetRef.current += speed;
         const half = track.scrollWidth / 2;
-        if (offset >= half) offset = 0;
-        track.style.transform = `translateX(-${offset}px)`;
+        if (offsetRef.current >= half) offsetRef.current = 0;
+        track.style.transform = `translateX(-${offsetRef.current}px)`;
       }
       autoScrollRef.current = requestAnimationFrame(step);
     }
@@ -127,103 +127,77 @@ const Collection = () => {
     return () => cancelAnimationFrame(autoScrollRef.current);
   }, []);
 
-  // ✅ Resume auto-scroll from current position after user stops dragging
   function resumeAutoScroll() {
     clearTimeout(pauseTimeout.current);
     pauseTimeout.current = setTimeout(() => {
       isPaused.current = false;
-    }, 1200); // wait 1.2s after user stops, then resume
+    }, 1200);
   }
 
-  // ── Mouse drag handlers ──
+  // ── Mouse handlers ──
   function handleMouseDown(e) {
-    isDragging.current   = true;
-    isPaused.current     = true;
-    dragStartX.current   = e.pageX;
-    // Read current translateX offset
-    const transform      = trackRef.current.style.transform;
-    const match          = transform.match(/translateX\(-?(\d+(?:\.\d+)?)px\)/);
-    dragScrollLeft.current = match ? parseFloat(match[1]) : 0;
-    trackRef.current.style.cursor = "grabbing";
-    trackRef.current.style.userSelect = "none";
+    isDragging.current     = true;
+    didDrag.current        = false;
+    isPaused.current       = true;
+    dragStartX.current     = e.pageX;
+    dragStartOffset.current = offsetRef.current; // ✅ snapshot current offset
+    if (trackRef.current) {
+      trackRef.current.style.cursor     = "grabbing";
+      trackRef.current.style.userSelect = "none";
+    }
   }
 
   function handleMouseMove(e) {
     if (!isDragging.current) return;
-    const dx     = e.pageX - dragStartX.current;
-    const half   = trackRef.current.scrollWidth / 2;
-    let newOffset = dragScrollLeft.current - dx;
-    // Wrap within bounds
+    const dx = e.pageX - dragStartX.current;
+    if (Math.abs(dx) > 4) didDrag.current = true; // moved enough → it's a drag
+    const half = trackRef.current.scrollWidth / 2;
+    let newOffset = dragStartOffset.current - dx; // ✅ based on snapshot, not live value
     if (newOffset < 0) newOffset = 0;
     if (newOffset >= half) newOffset = half - 1;
+    offsetRef.current = newOffset;                // ✅ update the single source of truth
     trackRef.current.style.transform = `translateX(-${newOffset}px)`;
-    // Update the offset that auto-scroll will continue from
-    // We update it by re-reading on mouseup
   }
 
-  function handleMouseUp(e) {
+  function handleMouseUp() {
     if (!isDragging.current) return;
     isDragging.current = false;
-    trackRef.current.style.cursor = "grab";
-    trackRef.current.style.userSelect = "";
-    // Sync auto-scroll offset to current drag position
-    const transform = trackRef.current.style.transform;
-    const match     = transform.match(/translateX\(-?(\d+(?:\.\d+)?)px\)/);
-    if (match) {
-      // We need to sync the offset variable inside the rAF loop
-      // We do this by dispatching a custom event
-      trackRef.current.dispatchEvent(new CustomEvent("syncOffset", { detail: parseFloat(match[1]) }));
+    if (trackRef.current) {
+      trackRef.current.style.cursor     = "grab";
+      trackRef.current.style.userSelect = "";
     }
-    resumeAutoScroll();
+    resumeAutoScroll(); // ✅ rAF will now continue from offsetRef.current — no snap
   }
 
   function handleMouseLeave() {
-    if (isDragging.current) handleMouseUp({});
+    if (isDragging.current) handleMouseUp();
   }
 
-  // ── Touch drag handlers ──
+  // ── Touch handlers ──
   function handleTouchStart(e) {
-    isDragging.current   = true;
-    isPaused.current     = true;
-    dragStartX.current   = e.touches[0].pageX;
-    const transform      = trackRef.current.style.transform;
-    const match          = transform.match(/translateX\(-?(\d+(?:\.\d+)?)px\)/);
-    dragScrollLeft.current = match ? parseFloat(match[1]) : 0;
+    isDragging.current      = true;
+    didDrag.current         = false;
+    isPaused.current        = true;
+    dragStartX.current      = e.touches[0].pageX;
+    dragStartOffset.current = offsetRef.current; // ✅ snapshot
   }
 
   function handleTouchMove(e) {
     if (!isDragging.current) return;
-    const dx       = e.touches[0].pageX - dragStartX.current;
-    const half     = trackRef.current.scrollWidth / 2;
-    let newOffset  = dragScrollLeft.current - dx;
+    const dx = e.touches[0].pageX - dragStartX.current;
+    if (Math.abs(dx) > 4) didDrag.current = true;
+    const half = trackRef.current.scrollWidth / 2;
+    let newOffset = dragStartOffset.current - dx; // ✅ snapshot-based
     if (newOffset < 0) newOffset = 0;
     if (newOffset >= half) newOffset = half - 1;
+    offsetRef.current = newOffset;
     trackRef.current.style.transform = `translateX(-${newOffset}px)`;
   }
 
   function handleTouchEnd() {
     isDragging.current = false;
-    const transform = trackRef.current?.style.transform;
-    const match     = transform?.match(/translateX\(-?(\d+(?:\.\d+)?)px\)/);
-    if (match && trackRef.current) {
-      trackRef.current.dispatchEvent(new CustomEvent("syncOffset", { detail: parseFloat(match[1]) }));
-    }
-    resumeAutoScroll();
+    resumeAutoScroll(); // ✅ continues from offsetRef.current
   }
-
-  // ✅ Listen for syncOffset event to keep rAF loop in sync with drag end position
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    let offsetSync = 0;
-
-    const handler = (e) => { offsetSync = e.detail; };
-    track.addEventListener("syncOffset", handler);
-
-    // Override the rAF to use synced offset when available
-    // This is handled by the step function reading from the transform directly
-    return () => track.removeEventListener("syncOffset", handler);
-  }, []);
 
   const SCROLL_COLLECTIONS = [...COLLECTIONS_META, ...COLLECTIONS_META];
 
@@ -243,9 +217,7 @@ const Collection = () => {
         </p>
       </motion.div>
 
-      {/* ✅ Scrolling Feed — drag-to-scroll + auto-scroll */}
-      <div className="relative overflow-hidden mt-12 select-none"
-        style={{ cursor: "grab" }}>
+      <div className="relative overflow-hidden mt-12 select-none" style={{ cursor: "grab" }}>
 
         {/* Fade edges */}
         <div className="absolute top-0 bottom-0 left-0 w-20 pointer-events-none z-10"
@@ -253,7 +225,6 @@ const Collection = () => {
         <div className="absolute top-0 bottom-0 right-0 w-20 pointer-events-none z-10"
           style={{ background: "linear-gradient(to left, #F6F3F0, transparent)" }} />
 
-        {/* ✅ Track — controlled by rAF transform, NOT CSS animation */}
         <div
           ref={trackRef}
           className="flex gap-5 w-max py-3 px-2"
@@ -276,8 +247,8 @@ const Collection = () => {
               <div
                 key={i}
                 onClick={() => {
-                  // Only open modal if not dragging
-                  if (!isDragging.current) setActiveModal(realIndex);
+                  // ✅ Only open modal if the user didn't drag
+                  if (!didDrag.current) setActiveModal(realIndex);
                 }}
                 className="w-[300px] flex-shrink-0 bg-white rounded-[22px] overflow-hidden
                   border-[1.5px] border-transparent shadow-sm
@@ -285,7 +256,6 @@ const Collection = () => {
                   transition-all duration-[350ms] group"
                 style={{ cursor: "grab" }}
               >
-                {/* 3 real product images from Supabase */}
                 {loadingImages || cardImages.length < 3 ? (
                   <SkeletonGrid />
                 ) : (

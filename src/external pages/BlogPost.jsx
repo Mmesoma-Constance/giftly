@@ -30,7 +30,7 @@ export default function BlogPost() {
 
   return (
     <div
-      className="min-h-screen w-full mt-20"
+      className="min-h-screen w-full mt-20 md:px-20"
       style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}
     >
       {/* Back bar */}
@@ -48,7 +48,7 @@ export default function BlogPost() {
       </div>
 
       {/* Post */}
-      <div className="max-w-[740px] mx-auto px-5 pt-10 pb-24">
+      <div className="max-w-[740px] mx-auto px-5 md:px-20 pt-10 pb-24">
 
         {/* Tag */}
         <span
@@ -157,9 +157,10 @@ export default function BlogPost() {
           <button
             onClick={() => navigate("/generate")}
             className="px-8 py-3.5 rounded-full font-fraunce font-bold text-base text-white tracking-wide
-              transition-all duration-200 active:scale-[.98] hover:brightness-110"
+              hover:opacity-90
+              transition-all hover:scale-[1.02] duration-200"
             style={{
-              background: "linear-gradient(135deg,#E8614D 0%,#c94a38 100%)",
+              background: "linear-gradient(135deg,#E8614D)",
               boxShadow: "0 6px 24px rgba(232,97,77,.32)",
             }}
           >
@@ -205,7 +206,7 @@ export default function BlogPost() {
                       {related.tag}
                     </span>
                     <p
-                      className="text-sm font-black text-[#2C1A12] leading-snug line-clamp-2
+                      className="text-sm font-black text-[#2C1A12] leading-snug line-clamp-2 
                         group-hover:text-[#E8614D] transition-colors duration-200"
                       style={{ fontFamily: "'Fraunces','Georgia',serif" }}
                     >

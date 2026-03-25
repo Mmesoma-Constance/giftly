@@ -5,7 +5,7 @@ import { blogPosts } from "./../data/blogs";
 
 const Blogs = () => {
   return (
-    <section className="py-20 md:py-28 bg-secondary/50 scroll-mt-21">
+    <section className="py-20 md:py-32 bg-secondary/50 scroll-mt-21">
       <div className="container mx-auto px-6">
 
         {/* 🔥 HEADING */}
