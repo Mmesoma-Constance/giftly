@@ -110,7 +110,7 @@ export default function Navbar() {
         </a>
 
         {/* Nav Links */}
-        <ul className="hidden md:flex items-center gap-1">
+        <ul className="hidden lg:flex items-center gap-1">
           {NAV_LINKS.map(({ label, href }) => {
             const isActive = isHome && activeHash === href;
             return (
@@ -137,7 +137,7 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <Link to="/saved-gifts"
-            className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-full
+            className="hidden lg:inline-flex items-center gap-2 px-5 py-2.5 rounded-full
               text-[#C94B38] border border-[#C94B38] font-semibold hover:opacity-90
               transition-all hover:scale-[1.02] relative text-[0.88rem]"
           >
@@ -153,7 +153,7 @@ export default function Navbar() {
           </Link>
 
           <Link to="/generate-gift"
-            className="hidden md:inline-flex items-center gap-2 px-7 py-3 rounded-full
+            className="hidden lg:inline-flex items-center gap-2 px-7 py-3 rounded-full
               text-white bg-[#C94B38] font-semibold hover:opacity-90 transition-all
               hover:scale-[1.02] text-[0.88rem]"
           >
@@ -161,7 +161,7 @@ export default function Navbar() {
             <ArrowRight className="w-4 h-4" />
           </Link>
 
-          <button className="md:hidden flex flex-col gap-[5px] p-1.5"
+          <button className="lg:hidden flex flex-col gap-[5px] p-1.5"
             onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
             <span className={`block w-5 h-0.5 bg-gray-700 rounded transition-all duration-300
               origin-center ${menuOpen ? "translate-y-[7px] rotate-45" : ""}`} />
@@ -174,8 +174,8 @@ export default function Navbar() {
       </nav>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden fixed top-[68px] left-0 right-0 z-40 bg-white/95
-        backdrop-blur-md border-b border-gray-100 shadow-lg px-6 pt-3 pb-5
+      <div className={`lg:hidden fixed top-[68px] left-0 right-0 z-40 bg-white/95
+        backdrop-blur-md border-b border-gray-100 shadow-lg  px-6 md:px-20 pt-3 pb-5
         flex flex-col gap-1 transition-all duration-300 ${
         menuOpen
           ? "opacity-100 translate-y-0 pointer-events-auto"

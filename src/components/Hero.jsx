@@ -18,17 +18,17 @@ const Hero = () => {
   }
 
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden md:px-20" 
+    <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden px-6 md:px-20" 
      style={{ background: 'linear-gradient(135deg,rgba(232,97,77,.05),rgba(240,168,48,.05))' }}>
      
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="font-fraunces text-4xl md:text-6xl font-extrabold text-foreground leading-tighter mb-6">
+            <h1 className="font-fraunces text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground leading-tighter mb-6">
               Find the  <span className="text-[#E8614D] ">Perfect</span>  Gift in{" "}
               <span className="relative after:content-[''] after:absolute after:left-0 after:right-0 after:-bottom-1
                 after:h-1 after:bg-linear-to-r after:from-[#C94B38] after:to-[#EE8070] after:rounded">

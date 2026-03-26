@@ -315,12 +315,12 @@ export default function SavedGifts() {
     <div className="min-h-screen mt-20" style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}>
       <Toast msg={toast.msg} visible={toast.visible} />
 
-      <div className="md:px-20">
+      <div className="px-5 md:px-20">
         
       </div>
 
       <div className="bg-white border-b border-[#EDE8E3] md:px-20">
-        <div className="max-w-[1320px] mx-auto px-5 pt-10 pb-0">
+        <div className="max-w-[1320px] mx-auto px-6 pt-10 pb-0">
           <button onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-[#E8614D] font-bold text-[0.85rem]
               border-none bg-transparent cursor-pointer mb-6 hover:opacity-75 transition-opacity"

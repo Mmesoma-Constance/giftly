@@ -257,7 +257,7 @@ const Trending = () => {
 
   return (
     <section className="bg-[#180806] py-12 sm:py-16 md:py-32 overflow-hidden scroll-mt-6" id="trending">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-20">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 sm:mb-12">

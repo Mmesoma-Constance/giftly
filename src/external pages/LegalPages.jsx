@@ -248,9 +248,17 @@ export function AboutUs() {
             Ready to find the perfect gift? 🎁
           </h3>
           <p className="text-sm text-[#2C1A12]/60 mb-6">No account needed. Free to use. Results in seconds.</p>
-          <button onClick={() => navigate("/generate-gift")}
-            className="px-8 py-3.5 rounded-full font-black text-base text-white transition-all duration-200 hover:brightness-110"
-            style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", boxShadow: "0 6px 24px rgba(232,97,77,.32)" }}>
+          
+           <button
+            onClick={() => navigate("/generate-gift")}
+            className="px-8 py-3.5 rounded-full font-fraunce font-bold text-base text-white tracking-wide
+              hover:opacity-90 cursor-pointer
+              transition-all hover:scale-[1.02] duration-200"
+            style={{
+              background: "#C94B38",
+              boxShadow: "0 6px 24px rgba(232,97,77,.32)",
+            }}
+          >
             Try Giftly Now →
           </button>
         </div>

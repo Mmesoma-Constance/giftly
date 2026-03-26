@@ -208,7 +208,7 @@ export const blogPosts = [
       "Wellness gifts have surpassed gadgets as the most appreciated presents. Here's how to give the gift of rest and renewal.",
     image: images[5],
     author: "Giftly Team",
-     date: "December 12, 2025",
+     date: "January 12, 2026",
     readTime: "6 min read",
     sections: [
       {

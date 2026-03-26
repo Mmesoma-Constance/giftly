@@ -263,7 +263,7 @@ const CollectionModal = ({ collection, onClose }) => {
                       {/* Price + Buy — right-aligned, never wrap */}
                       <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                         <div
-                          className="font-bold text-[#E8614D] text-[0.85rem] sm:text-[0.9rem] whitespace-nowrap"
+                          className="font-bold text-[#C94B38] text-[0.85rem] sm:text-[0.9rem] whitespace-nowrap"
                           style={{ fontFamily: "'Fraunces','Georgia',serif" }}
                         >
                           {p.price || "—"}
@@ -272,7 +272,7 @@ const CollectionModal = ({ collection, onClose }) => {
                           href={productUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-2.5 sm:px-3 py-1.5 rounded-full bg-[#E8614D] text-white
+                          className="px-2.5 sm:px-3 py-1.5 rounded-full bg-[#C94B38] text-white
                             font-bold text-[0.7rem] sm:text-[0.74rem] no-underline whitespace-nowrap
                             hover:bg-[#C94B38] hover:-translate-y-px transition-all duration-200"
                           style={{ boxShadow: "0 4px 12px rgba(232,97,77,.28)" }}
@@ -300,7 +300,7 @@ const CollectionModal = ({ collection, onClose }) => {
             </button>
             <button
               onClick={handleSeeAll}
-              className="flex-1 py-3 rounded-full bg-[#E8614D] text-white font-bold
+              className="flex-1 py-3 rounded-full bg-[#C94B38] text-white font-bold
                 border-none cursor-pointer text-[0.82rem] sm:text-[0.9rem]
                 hover:bg-[#C94B38] hover:-translate-y-px transition-all duration-200"
               style={{ boxShadow: "0 8px 32px rgba(232,97,77,.28)" }}

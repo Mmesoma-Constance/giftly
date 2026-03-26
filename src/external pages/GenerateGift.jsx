@@ -384,12 +384,12 @@ export default function GenerateGift() {
                   {/* ✅ Only show USD conversion if not already in USD */}
                   {currency.code !== "USD" && (
                     <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full
-                      bg-[#F0F7FF] border border-[#DBEAFE]">
-                      <span className="text-[.72rem] text-[#3B82F6]/70">≈</span>
-                      <span className="text-[.78rem] font-bold text-[#2563EB]">
+                      bg-[#fff8f7] border border-[#DBEAFE]">
+                      <span className="text-[.72rem] text-[#C94B38]/70">≈</span>
+                      <span className="text-[.78rem] font-bold text-[#C94B38]/80">
                         ${usdEquivalent} USD
                       </span>
-                      <span className="text-[.68rem] text-[#3B82F6]/50">
+                      <span className="text-[.68rem] text-[#C94B38]/50">
                         · store prices are in dollars
                       </span>
                     </div>
@@ -406,7 +406,7 @@ export default function GenerateGift() {
               <input type="text" value={interests} onChange={e => setInterests(e.target.value)}
                 placeholder={INTERESTS_PLACEHOLDER} className={inputCls} />
               <span className="text-[.74rem] text-[#2C1A12]/35 leading-relaxed">
-                Optional — helps us personalise far better ✨
+                Optional — helps us personalise far better 
               </span>
             </div>
 

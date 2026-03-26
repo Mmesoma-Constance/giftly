@@ -6,7 +6,7 @@ import { blogPosts } from "./../data/blogs";
 const Blogs = () => {
   return (
     <section className="py-20 md:py-32 bg-secondary/50 scroll-mt-21">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-6 lg:px-20">
 
         {/* 🔥 HEADING */}
         <motion.div
@@ -28,7 +28,7 @@ const Blogs = () => {
         </motion.div>
 
         {/* 🔥 BLOG GRID — show only first 3 on homepage */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {blogPosts.slice(0, 3).map((b, i) => (
             <motion.div
               key={b.slug}

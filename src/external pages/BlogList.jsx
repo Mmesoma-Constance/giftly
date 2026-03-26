@@ -12,11 +12,11 @@ export default function BlogList() {
 
   return (
     <div
-      className="min-h-screen w-full mt-20"
+      className="min-h-screen w-full mt-20 md:px-12"
       style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}
     >
       {/* Back bar */}
-      <div className="max-w-6xl mx-auto px-5 pt-14">
+      <div className="max-w-6xl mx-auto  px-5 pt-14">
         <button
           onClick={() => navigate("/")}
           className="inline-flex items-center gap-2 text-sm font-bold text-[#2C1A12]/70
@@ -50,7 +50,7 @@ export default function BlogList() {
       </div>
 
       {/* Grid */}
-      <div className="max-w-6xl mx-auto px-5 pb-24">
+      <div className="max-w-6xl mx-auto px-6 pb-24">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {blogPosts.map((post) => (
             <BlogCard

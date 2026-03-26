@@ -71,8 +71,7 @@ export default function BlogPost() {
         <div className="flex items-center gap-4 mb-10 pb-8 border-b border-[#2C1A12]/10">
           <div
             className="w-11 h-11 rounded-full flex items-center justify-center
-              text-white text-base flex-shrink-0"
-            style={{ background: "linear-gradient(135deg,#E8614D)" }}
+              text-white text-base shrink-0 bg-[#C94B38]"
           >
             {initial}
           </div>
@@ -155,12 +154,12 @@ export default function BlogPost() {
           </h3>
           <p className="text-sm text-[#2C1A12]/60 mb-6">{post.cta.sub}</p>
           <button
-            onClick={() => navigate("/generate")}
+            onClick={() => navigate("/generate-gift")}
             className="px-8 py-3.5 rounded-full font-fraunce font-bold text-base text-white tracking-wide
-              hover:opacity-90
+              hover:opacity-90 cursor-pointer
               transition-all hover:scale-[1.02] duration-200"
             style={{
-              background: "linear-gradient(135deg,#E8614D)",
+              background: "#C94B38",
               boxShadow: "0 6px 24px rgba(232,97,77,.32)",
             }}
           >
