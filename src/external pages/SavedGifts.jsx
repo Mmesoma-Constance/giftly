@@ -317,7 +317,7 @@ export default function SavedGifts() {
 
 
       <div className="bg-white border-b border-[#EDE8E3]">
-        <div className="max-w-[1320px] mx-auto px-6 md:px-16 pt-10 pb-0">
+        <div className="max-w-[1320px] mx-auto px-6 md:px-20 pt-10 pb-0">
           <button onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-[#E8614D] font-bold text-[0.85rem]
               border-none bg-transparent cursor-pointer mb-6 hover:opacity-75 transition-opacity"
