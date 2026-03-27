@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 const testimonials = [
   {
-    name: "Amaka O.",
+    name: "Abby O.",
     role: "Found a gift for her husband",
     text: "I was stuck for weeks trying to find an anniversary gift. Giftly gave me 5 perfect options in seconds. My husband loved the watch!",
     rating: 5,
@@ -15,7 +15,7 @@ const testimonials = [
     rating: 5,
   },
   {
-    name: "Chioma E.",
+    name: "Caroline E.",
     role: "Gift for best friend",
     text: "Affordable, thoughtful, and unique — that's what I got from Giftly. My friend was so surprised. I'll definitely use this again!",
     rating: 5,
