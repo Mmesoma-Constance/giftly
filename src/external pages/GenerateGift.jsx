@@ -30,6 +30,37 @@ const RELATIONSHIPS_FEMALE    = ["girlfriend","wife","mom","sister","grandparent
 const RELATIONSHIPS_MALE      = ["boyfriend","husband","dad","brother","grandparent","child","best-friend","friend","colleague","boss"];
 const RELATIONSHIPS_NONBINARY = ["girlfriend","boyfriend","wife","husband","mom","dad","sister","brother","grandparent","child","best-friend","friend","colleague","boss"];
 
+// ✅ Occasions that only make sense for specific genders/relationships
+// Key = occasion value, value = array of relationship values it's valid for
+const OCCASION_RELATIONSHIP_RULES = {
+  "fathers-day":  ["dad","grandfather","grandparent","husband","boyfriend","brother","uncle","friend","colleague","boss","child"],
+  "mothers-day":  ["mom","grandmother","grandparent","wife","girlfriend","sister","aunt","friend","colleague","boss","child"],
+};
+
+// ✅ Relationships that are clearly male — used to filter out mothers-day etc.
+const MALE_RELATIONSHIPS   = ["boyfriend","husband","dad","brother"];
+const FEMALE_RELATIONSHIPS = ["girlfriend","wife","mom","sister"];
+
+// ✅ Returns true if the occasion is incompatible with the selected relationship
+function isOccasionIncompatible(occasion, relationship, gender) {
+  if (!occasion || !relationship) return false;
+
+  if (occasion === "fathers-day") {
+    // Fathers day makes no sense for female-coded relationships
+    if (FEMALE_RELATIONSHIPS.includes(relationship)) return true;
+    // Also wrong if gender is female and relationship isn't gender-neutral
+    if (gender === "female" && !["grandparent","child","friend","colleague","boss","best-friend"].includes(relationship)) return true;
+  }
+
+  if (occasion === "mothers-day") {
+    // Mothers day makes no sense for male-coded relationships
+    if (MALE_RELATIONSHIPS.includes(relationship)) return true;
+    if (gender === "male" && !["grandparent","child","friend","colleague","boss","best-friend"].includes(relationship)) return true;
+  }
+
+  return false;
+}
+
 const AGES = [
   8, 10, 12, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
   30, 32, 34, 35, 38, 40, 42, 45, 48, 50, 52, 55, 58, 60, 65, 70,
@@ -78,12 +109,12 @@ const CURRENCIES = [
   { code: "USD", symbol: "$",  name: "US Dollar",         rate: 1,     budgetMin: 5,     budgetMax: 1000,   budgetDefault: 30,    step: 5    },
 ];
 
-// ✅ For the result page heading — always a clean whole number (e.g. $468, not $468.35)
+// ✅ For the result page heading — rounded whole number, then formatted as $69.00
 function toUSDRounded(amount, rate) {
   return Math.round(amount / rate);
 }
 
-// ✅ For the small hint label in the form only — shows 2 decimal places (e.g. $468.35)
+// ✅ For the small hint label in the form only — shows raw 2 decimal places (e.g. $12.66)
 function toUSDDisplay(amount, rate) {
   return (amount / rate).toFixed(2);
 }
@@ -102,13 +133,19 @@ function generateRandomProfile(currency) {
     gender === "female"   ? RELATIONSHIPS_FEMALE    :
     gender === "male"     ? RELATIONSHIPS_MALE      :
     RELATIONSHIPS_NONBINARY;
+  const relationship = pick(relationshipPool);
+
+  // ✅ Only pick occasions that are compatible with the chosen gender + relationship
+  const validOccasions = OCCASIONS.filter(o => !isOccasionIncompatible(o, relationship, gender));
+  const occasion = pick(validOccasions);
+
   const randomBudget = pick(BUDGETS.map(b => Math.round((b / 1580) * currency.rate / currency.step) * currency.step)
     .filter(b => b >= currency.budgetMin && b <= currency.budgetMax));
   return {
     age:          pick(AGES),
     gender,
-    relationship: pick(relationshipPool),
-    occasion:     pick(OCCASIONS),
+    relationship,
+    occasion,
     budget:       randomBudget || currency.budgetDefault,
     interests:    pickMultiple(INTEREST_POOL, 2, 4),
   };
@@ -130,7 +167,6 @@ function sliderPercent(val, min, max) {
 export default function GenerateGift() {
   const navigate = useNavigate();
 
-  // ✅ Currency state
   const [currencyCode,  setCurrencyCode]  = useState("NGN");
   const currency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
 
@@ -146,13 +182,18 @@ export default function GenerateGift() {
 
   const pct = sliderPercent(budget, currency.budgetMin, currency.budgetMax);
 
-  // ✅ Two separate USD values:
-  //    usdRounded  → passed to result page, used in heading  → "$468"  (clean, no messy decimals)
-  //    usdDisplay  → shown in the form hint label only        → "$468.35 USD"
+  // ✅ usdRounded → heading (e.g. 69 → "$69.00")
+  // ✅ usdDisplay → form hint label only (e.g. "$12.66 USD")
   const usdRounded = toUSDRounded(budget, currency.rate);
   const usdDisplay = toUSDDisplay(budget, currency.rate);
 
-  // ✅ When currency changes, reset budget to new default
+  // ✅ Warn user if their occasion + relationship combo is incompatible
+  const occasionWarning = isOccasionIncompatible(occasion, relationship, gender)
+    ? occasion === "fathers-day"
+      ? "⚠️ Father's Day doesn't match the selected recipient — please adjust."
+      : "⚠️ Mother's Day doesn't match the selected recipient — please adjust."
+    : null;
+
   function handleCurrencyChange(code) {
     const newCurrency = CURRENCIES.find(c => c.code === code) || CURRENCIES[0];
     setCurrencyCode(code);
@@ -186,6 +227,14 @@ export default function GenerateGift() {
     const validGroups  = RELATIONSHIP_BY_GENDER[val] || RELATIONSHIP_BY_GENDER[""];
     const validOptions = validGroups.flatMap((g) => g.options.map((o) => o[0]));
     if (relationship && !validOptions.includes(relationship)) setRelationship("");
+    // ✅ Also clear occasion if it becomes incompatible after gender change
+    if (occasion && isOccasionIncompatible(occasion, relationship, val)) setOccasion("");
+  }
+
+  function handleRelationshipChange(val) {
+    setRelationship(val);
+    // ✅ Clear occasion if it becomes incompatible with the newly selected relationship
+    if (occasion && isOccasionIncompatible(occasion, val, gender)) setOccasion("");
   }
 
   function surpriseMe() {
@@ -209,13 +258,14 @@ export default function GenerateGift() {
 
   function handleSubmit() {
     if (!age || !gender || !relationship || !budget) return;
+    if (occasionWarning) return; // ✅ Block submit if occasion is incompatible
     sessionStorage.removeItem("giftly_result_visited");
     sessionStorage.removeItem("giftly_cached_results");
     navigate("/result", {
       state: {
         age, gender, relationship, occasion,
         budget,
-        // ✅ Pass the clean rounded whole-dollar number — no messy decimals in the heading
+        // ✅ Clean rounded whole dollar — formatted as $69.00 in result heading
         budgetUSD: usdRounded,
         currency: currency.code,
         currencySymbol: currency.symbol,
@@ -224,7 +274,7 @@ export default function GenerateGift() {
     });
   }
 
-  const valid = age && gender && relationship && budget;
+  const valid = age && gender && relationship && budget && !occasionWarning;
   const relationshipGroups = RELATIONSHIP_BY_GENDER[gender] || RELATIONSHIP_BY_GENDER[""];
 
   return (
@@ -273,7 +323,8 @@ export default function GenerateGift() {
 
             {/* Relationship */}
             <FormGroup label="Relationship" required>
-              <SelectInput value={relationship} onChange={setRelationship}>
+              {/* ✅ Uses handleRelationshipChange to auto-clear incompatible occasions */}
+              <SelectInput value={relationship} onChange={handleRelationshipChange}>
                 <option value="">Select relationship</option>
                 {relationshipGroups.map(({ group, options }) => (
                   <optgroup key={group} label={group}>
@@ -316,15 +367,20 @@ export default function GenerateGift() {
                   <option value="new-year">🎆 New Year</option>
                 </optgroup>
               </SelectInput>
+              {/* ✅ Inline warning shown under the occasion dropdown */}
+              {occasionWarning && (
+                <p className="text-[0.75rem] font-semibold mt-1.5 px-1" style={{ color: "#E8614D" }}>
+                  {occasionWarning}
+                </p>
+              )}
             </FormGroup>
 
-            {/* ✅ Budget — with currency selector + USD conversion */}
+            {/* Budget */}
             <div className="sm:col-span-2 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <label className="text-base font-syne tracking-wide text-[#2C1A12] uppercase">
                   Budget <span className="text-[#E8614D]">*</span>
                 </label>
-                {/* ✅ Currency Selector */}
                 <div className="relative">
                   <select
                     value={currencyCode}
@@ -384,18 +440,15 @@ export default function GenerateGift() {
                   <span>{currency.symbol}{formatWithCommas(currency.budgetMax)}</span>
                 </div>
 
-                {/* ✅ Budget display + USD conversion hint */}
                 <div className="text-center mt-2">
                   <div className="text-xl font-black"
                     style={{ fontFamily: "'Fraunces','Georgia',serif", color: "#E8614D" }}>
                     {currency.symbol}{formatWithCommas(budget)}
                   </div>
-                  {/* ✅ Only show USD hint if not already in USD */}
                   {currency.code !== "USD" && (
                     <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full
                       bg-[#fff8f7] border border-[#DBEAFE]">
                       <span className="text-[.72rem] text-[#C94B38]/70">≈</span>
-                      {/* ✅ Hint label uses the precise decimal value for informational accuracy */}
                       <span className="text-[.78rem] font-bold text-[#C94B38]/80">
                         ${usdDisplay} USD
                       </span>

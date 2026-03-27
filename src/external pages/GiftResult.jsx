@@ -74,9 +74,13 @@ function setOriginalResults(r) { try { sessionStorage.setItem(ORIGINAL_CACHE_KEY
 function getSavedProducts()       { try { return JSON.parse(localStorage.getItem("giftly_saved_products") || "[]"); } catch { return []; } }
 function setSavedProductsStore(p) { localStorage.setItem("giftly_saved_products", JSON.stringify(p)); }
 
-// ✅ budgetUSD is now always a clean rounded integer (e.g. 468), so just format with $ and commas
+// ✅ budgetUSD is a clean rounded integer (e.g. 69).
+//    Always format with 2 decimal places → "$69.00", "$468.00"
 function formatBudgetHeading(budgetUSD, budget) {
-  if (budgetUSD) return "$" + Number(budgetUSD).toLocaleString("en-US");
+  if (budgetUSD != null) {
+    const n = Number(budgetUSD);
+    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
   if (!budget) return "";
   return "₦" + Number(budget).toLocaleString("en-NG");
 }
@@ -358,7 +362,6 @@ export default function GiftResult() {
     isCollection = false,
     collectionTitle = "",
     preloadedProducts = null,
-    // ✅ Products stored with the saved search — avoids any API call on re-run
     cachedProducts = null,
   } = formData;
 
@@ -367,10 +370,8 @@ export default function GiftResult() {
   const isReturning  = sessionStorage.getItem("giftly_result_visited") === "true";
   const cached       = getCachedResults();
 
-  // ✅ Priority: cachedProducts (re-run) → sessionStorage cache (back nav) → empty (fresh load)
   const hasCachedProducts = !!(cachedProducts && cachedProducts.length > 0);
 
-  // ✅ When coming from a saved search, show the overlay briefly before revealing results
   const [loading,          setLoading]          = useState(!isReturning || cached.length === 0);
   const [showMoreLoading,  setShowMoreLoading]  = useState(false);
   const [isInitialLoad,    setIsInitialLoad]    = useState(!isReturning || cached.length === 0);
@@ -416,16 +417,11 @@ export default function GiftResult() {
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, []);
 
   useEffect(() => {
-    // ✅ Re-run from saved search: restore cached products and show a brief branded loading overlay
     if (hasCachedProducts) {
       setCachedResults(cachedProducts);
       setOriginalResults(cachedProducts);
       sessionStorage.setItem("giftly_result_visited", "true");
-      // Show the overlay for a short moment so it feels intentional, then reveal
-      const t = setTimeout(() => {
-        setLoading(false);
-        setIsInitialLoad(false);
-      }, 1800);
+      const t = setTimeout(() => { setLoading(false); setIsInitialLoad(false); }, 1800);
       return () => clearTimeout(t);
     }
 
@@ -486,14 +482,7 @@ export default function GiftResult() {
   const handleSaveSearch = () => {
     if (saveState === "idle") {
       const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
-      // ✅ Store current results with the entry — re-run will use these, no API needed
-      const entry = {
-        id: Date.now(),
-        heading: savedHeading,
-        formData,
-        cachedProducts: results,
-        ts: Date.now(),
-      };
+      const entry = { id: Date.now(), heading: savedHeading, formData, cachedProducts: results, ts: Date.now() };
       if (!searches.some((s) => s.heading === savedHeading)) {
         searches.unshift(entry);
         localStorage.setItem("giftly_saved_searches", JSON.stringify(searches.slice(0, 20)));
@@ -521,7 +510,6 @@ export default function GiftResult() {
     clearTimeout(unsaveTimer.current);
     window.scrollTo({ top: 0, behavior: "smooth" });
     try {
-      // ✅ "Show More Ideas" is the ONLY place a new API call happens
       const fresh    = await searchGifts({ age, gender, relationship, occasion, budget, interests }, nextVariation);
       const valid    = fresh.filter((p) => p.buyUrl && p.buyUrl.startsWith("http"));
       const enriched = enrichWithCategory(valid);
@@ -568,29 +556,14 @@ export default function GiftResult() {
     : results.filter((p) => (p.cat || "gifts") === catFilter);
 
   useEffect(() => {
-    if (catFilter !== "all" && filtered.length === 0 && results.length > 0) {
-      setCatFilter("all");
-    }
+    if (catFilter !== "all" && filtered.length === 0 && results.length > 0) setCatFilter("all");
   }, [results]);
 
-  // ✅ Three distinct sets of loading phrases for each entry path
   const loadingPhrases = hasCachedProducts
-    ? [
-        "Loading your saved search…",
-        "Pulling up your picks…",
-        "Here come your saved ideas…",
-      ]
+    ? ["Loading your saved search…", "Pulling up your picks…", "Here come your saved ideas…"]
     : isRerun
-    ? [
-        `Re-running your saved search…`,
-        `Finding fresh ideas for your ${relLabel}…`,
-        `Almost ready for you…`,
-      ]
-    : [
-        "Reading between the lines…",
-        "Finding something they'll love…",
-        "Almost ready for you…",
-      ];
+    ? [`Re-running your saved search…`, `Finding fresh ideas for your ${relLabel}…`, `Almost ready for you…`]
+    : ["Reading between the lines…", "Finding something they'll love…", "Almost ready for you…"];
 
   return (
     <div className="min-h-screen mt-20" style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}>
@@ -612,9 +585,7 @@ export default function GiftResult() {
 
           {isShowMoreMode && (
             <div className="flex items-center gap-3 mb-4 flex-wrap">
-              <span className="text-[0.78rem] font-semibold text-[#9C8B82]">
-                Showing fresh results outside your original search
-              </span>
+              <span className="text-[0.78rem] font-semibold text-[#9C8B82]">Showing fresh results outside your original search</span>
               <button onClick={handleBackToOriginal}
                 className="flex items-center gap-1 text-[0.78rem] font-bold text-[#E8614D]
                   hover:opacity-75 transition-opacity border-none bg-transparent cursor-pointer">
@@ -663,7 +634,7 @@ export default function GiftResult() {
               <button onClick={handleSaveSearch}
                 className="px-[18px] py-[9px] rounded-full font-bold text-[0.82rem] border-none cursor-pointer transition-all duration-200"
                 style={{ background: saveButtonConfig.bg, color: saveButtonConfig.color, fontFamily: "'Syne',sans-serif",
-                 animation: saveState === "confirming" ? "savePulse 1s ease-in-out infinite" : "none" }}>
+                  animation: saveState === "confirming" ? "savePulse 1s ease-in-out infinite" : "none" }}>
                 {saveButtonConfig.label}
               </button>
             </div>

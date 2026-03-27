@@ -250,7 +250,7 @@ const Collection = () => {
                   // ✅ Only open modal if the user didn't drag
                   if (!didDrag.current) setActiveModal(realIndex);
                 }}
-                className="w-[300px] flex-shrink-0 bg-white rounded-[22px] overflow-hidden
+                className="w-[370px] shrink-0 bg-white rounded-[22px] overflow-hidden
                   border-[1.5px] border-transparent shadow-sm
                   hover:-translate-y-1.5 hover:shadow-xl hover:border-[#EDE8E3]
                   transition-all duration-[350ms] group"
