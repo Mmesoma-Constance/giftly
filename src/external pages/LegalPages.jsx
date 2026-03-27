@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const LAST_UPDATED = "January 1, 2026";
+const LAST_UPDATED = "March 25, 2026";
 
 export default function PrivacyPolicy() {
   const navigate = useNavigate();
@@ -219,7 +219,7 @@ export function AboutUs() {
             Giftly exists to make thoughtful gifting effortless. We believe the best gifts aren't the most expensive ones — they're the ones that show you were paying attention. Our AI-powered platform takes the stress out of gift-giving by matching the right gift to the right person, every time.
           </p>
           <p className="text-[#2C1A12]/70 leading-relaxed">
-            We're a team of designers, engineers, and gift-giving enthusiasts based in Lagos, Nigeria, building tools that make the people in your life feel genuinely seen and valued.
+            We're a team of designers, engineers, and gift-giving enthusiasts based in Anambra, Nigeria, building tools that make the people in your life feel genuinely seen and valued.
           </p>
         </div>
 
@@ -228,7 +228,7 @@ export function AboutUs() {
           {[
             { icon: "💡", title: "Intentionality", body: "Every feature we build is designed to help you give gifts that mean something." },
             { icon: "🤝", title: "Accessibility", body: "Great gifting shouldn't require a big budget. We serve every price range with equal care." },
-            { icon: "🌍", title: "Local Roots", body: "Built for Nigeria, with deep respect for the culture of giving that defines our communities." },
+            { icon: "🌍", title: "Local Roots", body: "Built with deep respect for the culture of giving that defines our communities." },
           ].map(({ icon, title, body }) => (
             <div key={title} className="bg-white rounded-2xl p-6 border border-[#2C1A12]/08"
               style={{ boxShadow: "0 3px 16px rgba(44,26,18,.05)" }}>

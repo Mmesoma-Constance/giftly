@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 const testimonials = [
@@ -30,18 +30,28 @@ const POSITIONS = {
 
 export default function Testimonials() {
   const [order, setOrder] = useState([0, 1, 2]);
-  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+  const [direction, setDirection] = useState(1);
+  // useRef to hold the interval so we can clear + restart it anywhere
+  const intervalRef = useRef(null);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
+  const startInterval = () => {
+    // Clear any existing interval first
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    intervalRef.current = setInterval(() => {
       setDirection(1);
       setOrder(([a, b, c]) => [b, c, a]);
     }, 4000);
-    return () => clearInterval(interval);
+  };
+
+  useEffect(() => {
+    startInterval();
+    return () => clearInterval(intervalRef.current);
   }, []);
 
   const handleClick = (clickedIndex) => {
     if (clickedIndex === 1) return; // already center
+
     setDirection(clickedIndex === 2 ? 1 : -1);
     setOrder((prev) => {
       const newOrder = [...prev];
@@ -50,34 +60,36 @@ export default function Testimonials() {
       newOrder.splice(1, 0, clickedValue);
       return newOrder;
     });
+
+    // Reset the 4-second timer so the newly centered card gets a full 4s
+    startInterval();
   };
 
   const posKeys = ["left", "center", "right"];
 
   return (
-    <section className="py-24 md:py-28 flex flex-col items-center scroll-mt-21 overflow-hidden"
-     style={{ background: 'linear-gradient(135deg,rgba(232,97,77,.05),rgba(240,168,48,.05))' }}
-     
-    id="testimonials">
-
+    <section
+      className="py-24 md:py-28 flex flex-col items-center scroll-mt-21 overflow-hidden"
+      style={{ background: "linear-gradient(135deg,rgba(232,97,77,.05),rgba(240,168,48,.05))" }}
+      id="testimonials"
+    >
       {/* HEADING */}
-    
       <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center"
-        > 
-            <span className="text-[#C94B38] text-xs sm:text-sm font-bold uppercase tracking-widest">
-              Loved by Gifters
-            </span>
-            <h2 className="font-fraunces text-2xl sm:text-3xl md:text-4xl font-bold mt-2">
-              Real stories, real joy
-            </h2>
-            <p className="text-black/90 mt-2 text-sm sm:text-base max-w-xl mx-auto">
-            Real stories from happy users who found the perfect gift effortlessly
-            </p>
-          </motion.div>
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="text-center"
+      >
+        <span className="text-[#C94B38] text-xs sm:text-sm font-bold uppercase tracking-widest">
+          Loved by Gifters
+        </span>
+        <h2 className="font-fraunces text-2xl sm:text-3xl md:text-4xl font-bold mt-2">
+          Real stories, real joy
+        </h2>
+        <p className="text-black/90 mt-2 text-sm sm:text-base max-w-xl mx-auto">
+          Real stories from happy users who found the perfect gift effortlessly
+        </p>
+      </motion.div>
 
       {/* CARDS */}
       <div className="relative w-full max-w-275 h-105 flex justify-center items-center">
@@ -122,8 +134,7 @@ export default function Testimonials() {
               }}
               whileTap={{ scale: 0.95 }}
               style={{ position: "absolute" }}
-              className="w-65 md:w-85 bg-white rounded-2xl shadow-2xl 
-              p-6 md:p-8 flex flex-col justify-between cursor-pointer"
+              className="w-65 md:w-85 bg-white rounded-2xl shadow-2xl p-6 md:p-8 flex flex-col justify-between cursor-pointer"
             >
               {/* ⭐ Rating */}
               <div className="flex mb-3 text-lg">

@@ -77,7 +77,8 @@ function SkeletonGrid() {
     <div className="grid grid-cols-3 h-[130px] gap-px bg-[#F6F3F0]">
       {[0, 1, 2].map((i) => (
         <div key={i} className="w-full h-full"
-          style={{ background: "linear-gradient(90deg,#EDE8E3 0%,#F6F3F0 50%,#EDE8E3 100%)", backgroundSize: "200% 100%", animation: "collCardShimmer 1.4s ease-in-out infinite" }} />
+          style={{ background: "linear-gradient(90deg,#EDE8E3 0%,#F6F3F0 50%,#EDE8E3 100%)", backgroundSize: "200% 100%",
+             animation: "collCardShimmer 1.4s ease-in-out infinite" }} />
       ))}
     </div>
   );
@@ -111,7 +112,7 @@ const Collection = () => {
     const track = trackRef.current;
     if (!track) return;
 
-    const speed = 0.6;
+    const speed = 0.9;
 
     function step() {
       if (!isPaused.current && track) {
@@ -250,7 +251,7 @@ const Collection = () => {
                   // ✅ Only open modal if the user didn't drag
                   if (!didDrag.current) setActiveModal(realIndex);
                 }}
-                className="w-[370px] shrink-0 bg-white rounded-[22px] overflow-hidden
+                className="w-[320px] sm:w-[370px] shrink-0 bg-white rounded-[22px] overflow-hidden
                   border-[1.5px] border-transparent shadow-sm
                   hover:-translate-y-1.5 hover:shadow-xl hover:border-[#EDE8E3]
                   transition-all duration-[350ms] group"
