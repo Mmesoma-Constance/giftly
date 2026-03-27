@@ -88,12 +88,10 @@ function SavedProductCard({ p, onRemove }) {
         transition-all duration-[350ms] group flex flex-col"
     >
       <div className="relative overflow-hidden h-[190px] flex-shrink-0 bg-[#F6F3F0]">
-        {/* Category pill */}
         <span className="absolute top-3 left-3 z-10 text-[0.65rem] font-bold px-[9px] py-[4px] rounded-full"
           style={{ background: catMeta.bg, color: catMeta.color }}>
           {catMeta.label}
         </span>
-        {/* Remove button */}
         <button onClick={() => onRemove(p.id)}
           className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/90
             backdrop-blur-sm flex items-center justify-center text-[0.85rem]
@@ -169,14 +167,17 @@ function SavedProductCard({ p, onRemove }) {
   );
 }
 
+// ✅ Redesigned to match the screenshot — bold text, red highlights, clean layout
 function SavedSearchCard({ entry, onRerun, onDelete }) {
   const date = new Date(entry.ts).toLocaleDateString("en-GB", {
     day: "numeric", month: "short", year: "numeric",
   });
 
+  // Parse the heading into parts: occasion, relationship, amount
   const forYourIdx  = entry.heading.indexOf("for your ");
   const underIdx    = entry.heading.lastIndexOf(" under ");
-  const amountMatch = entry.heading.match(/(\$[\d,]+)$/);
+  const amountMatch = entry.heading.match(/(\$[\d,]+(?:\.\d+)?)$/);
+
   const parsed =
     forYourIdx !== -1 && underIdx !== -1 && underIdx > forYourIdx && amountMatch
       ? {
@@ -185,6 +186,15 @@ function SavedSearchCard({ entry, onRerun, onDelete }) {
           amount: amountMatch[1],
         }
       : null;
+
+  // Extract occasion from the prefix (between "Perfect " and "gifts for your ")
+  let occasionText = "";
+  let relationshipText = parsed?.rel || "";
+  if (parsed) {
+    const afterPerfect = parsed.prefix.slice("Perfect ".length);
+    const giftsIdx     = afterPerfect.indexOf("gifts for your ");
+    occasionText       = giftsIdx > 0 ? afterPerfect.slice(0, giftsIdx).trim() : "";
+  }
 
   return (
     <motion.div layout
@@ -197,46 +207,52 @@ function SavedSearchCard({ entry, onRerun, onDelete }) {
         transition-all duration-300"
     >
       <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div className="w-10 h-10 rounded-[12px] flex items-center justify-center text-[1.2rem] flex-shrink-0 mt-0.5"
-            style={{ background: "linear-gradient(135deg,#E8614D)" }}>
+        {/* Top row: search icon + delete button */}
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0"
+            style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)" }}>
             <Search className="w-5 h-5 text-white" />
           </div>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
-            className="w-7 h-7 rounded-full bg-[#F6F3F0] flex items-center justify-center
-              text-[0.72rem] text-[#9C8B82] font-bold border-none cursor-pointer flex-shrink-0
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
+            className="w-8 h-8 rounded-full bg-[#F6F3F0] flex items-center justify-center
+              text-[0.75rem] text-[#9C8B82] font-bold border-none cursor-pointer flex-shrink-0
               hover:bg-[#E8614D]/10 hover:text-[#E8614D] transition-all duration-200"
-            title="Remove">✕</button>
+            title="Remove">
+            ✕
+          </button>
         </div>
 
-        <div className="text-[1rem] font-syne text-[#1C1410] leading-[1.4] mb-2"
+        {/* ✅ Heading — matches screenshot style: bold, red accents, clean */}
+        <div className="text-[1rem] text-[#1C1410] leading-[1.55] mb-4"
           style={{ fontFamily: "'Fraunces','Georgia',serif" }}>
-          {parsed ? (() => {
-            const afterPerfect = parsed.prefix.slice("Perfect ".length);
-            const giftsIdx     = afterPerfect.indexOf("gifts for your ");
-            const occasion     = giftsIdx > 0 ? afterPerfect.slice(0, giftsIdx).trim() : "";
-            return (
-              <>
-                {"Perfect "}
-                {occasion && <span className="text-[#E8614D]">{occasion} </span>}
-                {"gifts for your "}
-                <span className="text-[#E8614D]">{parsed.rel}</span>
-                {" under "}
-                <span className="inline-block px-2 py-0.5 rounded-full text-[0.82rem] ml-1 align-middle"
-                  style={{ background: "rgba(232,97,77,.1)", color: "#E8614D", fontFamily: "'Syne',sans-serif" }}>
-                  {parsed.amount}
-                </span>
-              </>
-            );
-          })() : entry.heading}
+          {parsed ? (
+            <>
+              <span className="font-bold">Perfect </span>
+              {occasionText && (
+                <span className="font-bold" style={{ color: "#E8614D" }}>{occasionText} </span>
+              )}
+              <span className="font-bold">gifts for your </span>
+              <span className="font-bold" style={{ color: "#E8614D" }}>{relationshipText}</span>
+              <span className="font-bold"> under </span>
+              <span className="inline-flex items-center px-[10px] py-[3px] rounded-full text-[0.82rem] font-bold ml-[2px] align-middle"
+                style={{ background: "rgba(232,97,77,.1)", color: "#E8614D", fontFamily: "'Syne',sans-serif" }}>
+                {parsed.amount}
+              </span>
+            </>
+          ) : (
+            <span className="font-bold">{entry.heading}</span>
+          )}
         </div>
 
-        {/* ✅ Re-run hint with context */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#F6F3F0]">
-          <span className="text-[0.73rem] text-[#9C8B82] font-medium">🕐 Saved {date}</span>
+        {/* Bottom row: date + re-run hint */}
+        <div className="flex items-center justify-between pt-3 border-t border-[#F6F3F0]">
+          <span className="text-[0.73rem] text-[#9C8B82] font-medium flex items-center gap-1">
+            🕐 Saved {date}
+          </span>
           <span className="flex items-center gap-1 text-[0.75rem] font-bold text-[#E8614D]
             opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-1 group-hover:translate-x-0">
-            Re-run search
+            View results
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
               <path d="M2 6h8M7 3l3 3-3 3" stroke="#E8614D" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -295,14 +311,15 @@ export default function SavedGifts() {
     showToast("All saved searches cleared");
   };
 
-  // ✅ Rerun clears cache and passes isRerun flag so overlay shows correct message
+  // ✅ Re-run passes cachedProducts so GiftResult shows results instantly — zero API call
   const handleRerun = (entry) => {
     sessionStorage.removeItem("giftly_result_visited");
     sessionStorage.removeItem("giftly_cached_results");
     navigate("/result", {
       state: {
         ...entry.formData,
-        isRerun: true, // ✅ tells GiftResult to show "Re-running your saved search…"
+        // ✅ Pass stored products directly — no new API call needed
+        cachedProducts: entry.cachedProducts || null,
       },
     });
   };
@@ -424,7 +441,7 @@ export default function SavedGifts() {
               <>
                 <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                   <p className="text-[0.88rem] text-[#9C8B82]">
-                    {savedSearches.length} saved search{savedSearches.length !== 1 ? "es" : ""} — tap any to instantly re-run it
+                    {savedSearches.length} saved search{savedSearches.length !== 1 ? "es" : ""} — tap any to view results instantly
                   </p>
                   <button onClick={handleClearSearches}
                     className="text-[0.82rem] font-bold text-[#9C8B82] border-none bg-transparent
@@ -445,7 +462,7 @@ export default function SavedGifts() {
               <div className="flex flex-col items-center text-center py-16">
                 <div className="text-[4rem] mb-5 opacity-30">🔖</div>
                 <h3 className="text-[1.4rem] font-syne text-[#1C1410] mb-2" style={{ fontFamily: "'Fraunces','Georgia',serif" }}>No saved searches yet</h3>
-                <p className="text-[#5C4A3F] mb-6 text-[0.9rem]">After generating results, click "Save This Search" to store it here for one-tap re-runs.</p>
+                <p className="text-[#5C4A3F] mb-6 text-[0.9rem]">After generating results, click "Save This Search" to store it here for one-tap viewing.</p>
                 <button onClick={() => navigate("/generate-gift")}
                   className="px-6 py-3 rounded-full font-bold text-white text-[0.88rem] border-none cursor-pointer hover:opacity-90 transition-all"
                   style={{ background: "linear-gradient(135deg,#E8614D,#c94a38)", boxShadow: "0 6px 24px rgba(232,97,77,.28)", fontFamily: "'Syne',sans-serif" }}>

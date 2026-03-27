@@ -68,18 +68,23 @@ const INTEREST_POOL = [
 ];
 
 // ✅ Currency config — rate = how many local units = $1 USD
-// Update the rates periodically or fetch live if you have an API
 const CURRENCIES = [
-  { code: "NGN", symbol: "₦", name: "Nigerian Naira",    rate: 1580,  budgetMin: 2000,    budgetMax: 500000,  budgetDefault: 20000,  step: 1000  },
-  { code: "GHS", symbol: "₵", name: "Ghanaian Cedi",     rate: 15.5,  budgetMin: 20,      budgetMax: 5000,    budgetDefault: 200,    step: 10    },
-  { code: "KES", symbol: "KSh", name: "Kenyan Shilling", rate: 129,   budgetMin: 200,     budgetMax: 65000,   budgetDefault: 2000,   step: 100   },
-  { code: "ZAR", symbol: "R",  name: "South African Rand",rate: 18.5, budgetMin: 50,      budgetMax: 10000,   budgetDefault: 500,    step: 50    },
-  { code: "GBP", symbol: "£",  name: "British Pound",     rate: 0.79,  budgetMin: 5,       budgetMax: 2000,    budgetDefault: 50,     step: 5     },
-  { code: "EUR", symbol: "€",  name: "Euro",              rate: 0.92,  budgetMin: 5,       budgetMax: 2000,    budgetDefault: 50,     step: 5     },
-  { code: "USD", symbol: "$",  name: "US Dollar",         rate: 1,     budgetMin: 5,       budgetMax: 1000,    budgetDefault: 30,     step: 5     },
+  { code: "NGN", symbol: "₦", name: "Nigerian Naira",     rate: 1580,  budgetMin: 2000,  budgetMax: 500000, budgetDefault: 20000, step: 1000 },
+  { code: "GHS", symbol: "₵", name: "Ghanaian Cedi",      rate: 15.5,  budgetMin: 20,    budgetMax: 5000,   budgetDefault: 200,   step: 10   },
+  { code: "KES", symbol: "KSh", name: "Kenyan Shilling",  rate: 129,   budgetMin: 200,   budgetMax: 65000,  budgetDefault: 2000,  step: 100  },
+  { code: "ZAR", symbol: "R",  name: "South African Rand",rate: 18.5,  budgetMin: 50,    budgetMax: 10000,  budgetDefault: 500,   step: 50   },
+  { code: "GBP", symbol: "£",  name: "British Pound",     rate: 0.79,  budgetMin: 5,     budgetMax: 2000,   budgetDefault: 50,    step: 5    },
+  { code: "EUR", symbol: "€",  name: "Euro",              rate: 0.92,  budgetMin: 5,     budgetMax: 2000,   budgetDefault: 50,    step: 5    },
+  { code: "USD", symbol: "$",  name: "US Dollar",         rate: 1,     budgetMin: 5,     budgetMax: 1000,   budgetDefault: 30,    step: 5    },
 ];
 
-function toUSD(amount, rate) {
+// ✅ For the result page heading — always a clean whole number (e.g. $468, not $468.35)
+function toUSDRounded(amount, rate) {
+  return Math.round(amount / rate);
+}
+
+// ✅ For the small hint label in the form only — shows 2 decimal places (e.g. $468.35)
+function toUSDDisplay(amount, rate) {
   return (amount / rate).toFixed(2);
 }
 
@@ -97,7 +102,6 @@ function generateRandomProfile(currency) {
     gender === "female"   ? RELATIONSHIPS_FEMALE    :
     gender === "male"     ? RELATIONSHIPS_MALE      :
     RELATIONSHIPS_NONBINARY;
-  // Pick a random budget within the currency's range
   const randomBudget = pick(BUDGETS.map(b => Math.round((b / 1580) * currency.rate / currency.step) * currency.step)
     .filter(b => b >= currency.budgetMin && b <= currency.budgetMax));
   return {
@@ -141,7 +145,12 @@ export default function GenerateGift() {
   const sliderRef = useRef(null);
 
   const pct = sliderPercent(budget, currency.budgetMin, currency.budgetMax);
-  const usdEquivalent = toUSD(budget, currency.rate);
+
+  // ✅ Two separate USD values:
+  //    usdRounded  → passed to result page, used in heading  → "$468"  (clean, no messy decimals)
+  //    usdDisplay  → shown in the form hint label only        → "$468.35 USD"
+  const usdRounded = toUSDRounded(budget, currency.rate);
+  const usdDisplay = toUSDDisplay(budget, currency.rate);
 
   // ✅ When currency changes, reset budget to new default
   function handleCurrencyChange(code) {
@@ -202,12 +211,12 @@ export default function GenerateGift() {
     if (!age || !gender || !relationship || !budget) return;
     sessionStorage.removeItem("giftly_result_visited");
     sessionStorage.removeItem("giftly_cached_results");
-    // ✅ Pass budgetUSD so the result page can filter by dollar value
     navigate("/result", {
       state: {
         age, gender, relationship, occasion,
         budget,
-        budgetUSD: parseFloat(usdEquivalent),
+        // ✅ Pass the clean rounded whole-dollar number — no messy decimals in the heading
+        budgetUSD: usdRounded,
         currency: currency.code,
         currencySymbol: currency.symbol,
         interests,
@@ -309,7 +318,7 @@ export default function GenerateGift() {
               </SelectInput>
             </FormGroup>
 
-            {/* ✅ Budget — now with currency selector + USD conversion */}
+            {/* ✅ Budget — with currency selector + USD conversion */}
             <div className="sm:col-span-2 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <label className="text-base font-syne tracking-wide text-[#2C1A12] uppercase">
@@ -375,19 +384,20 @@ export default function GenerateGift() {
                   <span>{currency.symbol}{formatWithCommas(currency.budgetMax)}</span>
                 </div>
 
-                {/* ✅ Budget display + USD conversion */}
+                {/* ✅ Budget display + USD conversion hint */}
                 <div className="text-center mt-2">
                   <div className="text-xl font-black"
                     style={{ fontFamily: "'Fraunces','Georgia',serif", color: "#E8614D" }}>
                     {currency.symbol}{formatWithCommas(budget)}
                   </div>
-                  {/* ✅ Only show USD conversion if not already in USD */}
+                  {/* ✅ Only show USD hint if not already in USD */}
                   {currency.code !== "USD" && (
                     <div className="mt-1 inline-flex items-center gap-1.5 px-3 py-1 rounded-full
                       bg-[#fff8f7] border border-[#DBEAFE]">
                       <span className="text-[.72rem] text-[#C94B38]/70">≈</span>
+                      {/* ✅ Hint label uses the precise decimal value for informational accuracy */}
                       <span className="text-[.78rem] font-bold text-[#C94B38]/80">
-                        ${usdEquivalent} USD
+                        ${usdDisplay} USD
                       </span>
                       <span className="text-[.68rem] text-[#C94B38]/50">
                         · store prices are in dollars
@@ -430,7 +440,7 @@ export default function GenerateGift() {
               </div>
               <button onClick={surpriseMe}
                 className="shrink-0 px-4 py-2 rounded-xl text-sm font-black tracking-wide
-                  text-white transition-all duration-200 active:scale-95 hover:brightness-110"
+                  text-white transition-all duration-200 active:scale-95 cursor-pointer hover:scale-[1.02] "
                 style={{ background: "linear-gradient(135deg,#E8614D)", boxShadow: "0 4px 14px rgba(240,168,48,.35)" }}>
                 Surprise Me 
               </button>
@@ -441,7 +451,7 @@ export default function GenerateGift() {
               <button onClick={handleSubmit} disabled={!valid}
                 className="flex-1 flex justify-center items-center gap-2 px-6 py-4
                   rounded-full font-syne text-lg font-bold text-white tracking-wide
-                  transition-all duration-200 active:scale-[.98]
+                  transition-all duration-200 active:scale-[.98] cursor-pointer
                   disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   background: valid ? "linear-gradient(135deg,#E8614D 0%,#c94a38 100%)" : "#180806",

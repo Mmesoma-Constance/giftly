@@ -74,7 +74,9 @@ function setOriginalResults(r) { try { sessionStorage.setItem(ORIGINAL_CACHE_KEY
 function getSavedProducts()       { try { return JSON.parse(localStorage.getItem("giftly_saved_products") || "[]"); } catch { return []; } }
 function setSavedProductsStore(p) { localStorage.setItem("giftly_saved_products", JSON.stringify(p)); }
 
-function formatBudgetHeading(budget) {
+// ✅ budgetUSD is now always a clean rounded integer (e.g. 468), so just format with $ and commas
+function formatBudgetHeading(budgetUSD, budget) {
+  if (budgetUSD) return "$" + Number(budgetUSD).toLocaleString("en-US");
   if (!budget) return "";
   return "₦" + Number(budget).toLocaleString("en-NG");
 }
@@ -350,19 +352,25 @@ export default function GiftResult() {
   const {
     age, gender, relationship, occasion,
     budget = 0,
+    budgetUSD,
     interests = "",
     isRerun = false,
     isCollection = false,
     collectionTitle = "",
     preloadedProducts = null,
+    // ✅ Products stored with the saved search — avoids any API call on re-run
+    cachedProducts = null,
   } = formData;
 
   const [catFilter,        setCatFilter]        = useState("all");
   const [saved,            setSaved]            = useState(() => getSavedProducts().map((p) => p.id));
   const isReturning  = sessionStorage.getItem("giftly_result_visited") === "true";
   const cached       = getCachedResults();
-  const [results,          setResults]          = useState(() => isReturning ? cached : []);
-  const [seenIds,          setSeenIds]          = useState(() => isReturning ? cached.map((p) => p.id) : []);
+
+  // ✅ Priority: cachedProducts (re-run) → sessionStorage cache (back nav) → empty (fresh load)
+  const hasCachedProducts = !!(cachedProducts && cachedProducts.length > 0);
+
+  // ✅ When coming from a saved search, show the overlay briefly before revealing results
   const [loading,          setLoading]          = useState(!isReturning || cached.length === 0);
   const [showMoreLoading,  setShowMoreLoading]  = useState(false);
   const [isInitialLoad,    setIsInitialLoad]    = useState(!isReturning || cached.length === 0);
@@ -372,12 +380,33 @@ export default function GiftResult() {
   const [currentVariation, setCurrentVariation] = useState(0);
   const [isShowMoreMode,   setIsShowMoreMode]   = useState(false);
 
+  const [results, setResults] = useState(() => {
+    if (hasCachedProducts) return cachedProducts;
+    if (isReturning) return cached;
+    return [];
+  });
+  const [seenIds, setSeenIds] = useState(() => {
+    if (hasCachedProducts) return cachedProducts.map((p) => p.id);
+    if (isReturning) return cached.map((p) => p.id);
+    return [];
+  });
+
+  const occasionLabel = occasion ? fmtOccasion(occasion) + " " : "";
+  const relLabel      = relationship ? cap(relationship.replace(/-/g, " ")) : "them";
+  const budgetDisplay = formatBudgetHeading(budgetUSD, budget);
+
+  const heading = isCollection && collectionTitle
+    ? collectionTitle
+    : isShowMoreMode
+    ? `More ${occasionLabel}gift ideas for your ${relLabel}`
+    : `Perfect ${occasionLabel}gifts for your ${relLabel} under ${budgetDisplay}`;
+
+  const savedHeading = `Perfect ${occasionLabel}gifts for your ${relLabel} under ${budgetDisplay}`;
+
   const [saveState, setSaveState] = useState(() => {
     try {
-      const oLabel  = occasion ? fmtOccasion(occasion) + " " : "";
-      const heading = `Perfect ${oLabel}gifts for your ${relationship ? cap(relationship.replace(/-/g, " ")) : "them"} under ${formatBudgetHeading(budget)}`;
       const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
-      return searches.some((s) => s.heading === heading) ? "saved" : "idle";
+      return searches.some((s) => s.heading === savedHeading) ? "saved" : "idle";
     } catch { return "idle"; }
   });
 
@@ -387,6 +416,19 @@ export default function GiftResult() {
   useEffect(() => { window.scrollTo({ top: 0, behavior: "instant" }); }, []);
 
   useEffect(() => {
+    // ✅ Re-run from saved search: restore cached products and show a brief branded loading overlay
+    if (hasCachedProducts) {
+      setCachedResults(cachedProducts);
+      setOriginalResults(cachedProducts);
+      sessionStorage.setItem("giftly_result_visited", "true");
+      // Show the overlay for a short moment so it feels intentional, then reveal
+      const t = setTimeout(() => {
+        setLoading(false);
+        setIsInitialLoad(false);
+      }, 1800);
+      return () => clearTimeout(t);
+    }
+
     if (isReturning && cached.length > 0) { setLoading(false); setIsInitialLoad(false); return; }
 
     if (preloadedProducts && preloadedProducts.length > 0) {
@@ -441,21 +483,17 @@ export default function GiftResult() {
     }
   };
 
-  const occasionLabel = occasion ? fmtOccasion(occasion) + " " : "";
-  const relLabel      = relationship ? cap(relationship.replace(/-/g, " ")) : "them";
-
-  const heading = isCollection && collectionTitle
-    ? collectionTitle
-    : isShowMoreMode
-    ? `More ${occasionLabel}gift ideas for your ${relLabel}`
-    : `Perfect ${occasionLabel}gifts for your ${relLabel} under ${formatBudgetHeading(budget)}`;
-
-  const savedHeading = `Perfect ${occasionLabel}gifts for your ${relLabel} under ${formatBudgetHeading(budget)}`;
-
   const handleSaveSearch = () => {
     if (saveState === "idle") {
       const searches = JSON.parse(localStorage.getItem("giftly_saved_searches") || "[]");
-      const entry = { id: Date.now(), heading: savedHeading, formData, ts: Date.now() };
+      // ✅ Store current results with the entry — re-run will use these, no API needed
+      const entry = {
+        id: Date.now(),
+        heading: savedHeading,
+        formData,
+        cachedProducts: results,
+        ts: Date.now(),
+      };
       if (!searches.some((s) => s.heading === savedHeading)) {
         searches.unshift(entry);
         localStorage.setItem("giftly_saved_searches", JSON.stringify(searches.slice(0, 20)));
@@ -483,6 +521,7 @@ export default function GiftResult() {
     clearTimeout(unsaveTimer.current);
     window.scrollTo({ top: 0, behavior: "smooth" });
     try {
+      // ✅ "Show More Ideas" is the ONLY place a new API call happens
       const fresh    = await searchGifts({ age, gender, relationship, occasion, budget, interests }, nextVariation);
       const valid    = fresh.filter((p) => p.buyUrl && p.buyUrl.startsWith("http"));
       const enriched = enrichWithCategory(valid);
@@ -513,14 +552,12 @@ export default function GiftResult() {
     }
   };
 
-  // ✅ Compute category counts from results
   const catCounts = results.reduce((acc, p) => {
     const c = p.cat || "gifts";
     acc[c] = (acc[c] || 0) + 1;
     return acc;
   }, {});
 
-  // ✅ Only show tabs that have at least 1 product — always include "All"
   const visibleCats = ALL_CATS.filter(([val]) => {
     if (val === "all") return true;
     return (catCounts[val] || 0) > 0;
@@ -530,16 +567,30 @@ export default function GiftResult() {
     ? results
     : results.filter((p) => (p.cat || "gifts") === catFilter);
 
-  // ✅ If current tab becomes empty after filter change, reset to all
   useEffect(() => {
     if (catFilter !== "all" && filtered.length === 0 && results.length > 0) {
       setCatFilter("all");
     }
   }, [results]);
 
-  const loadingPhrases = isRerun
-    ? [`Re-running your saved search…`, `Finding fresh ideas for your ${relLabel}…`, `Almost ready for you…`]
-    : ["Reading between the lines…", "Finding something they'll love…", "Almost ready for you…"];
+  // ✅ Three distinct sets of loading phrases for each entry path
+  const loadingPhrases = hasCachedProducts
+    ? [
+        "Loading your saved search…",
+        "Pulling up your picks…",
+        "Here come your saved ideas…",
+      ]
+    : isRerun
+    ? [
+        `Re-running your saved search…`,
+        `Finding fresh ideas for your ${relLabel}…`,
+        `Almost ready for you…`,
+      ]
+    : [
+        "Reading between the lines…",
+        "Finding something they'll love…",
+        "Almost ready for you…",
+      ];
 
   return (
     <div className="min-h-screen mt-20" style={{ background: "#FAF7F2", fontFamily: "'Syne','DM Sans',sans-serif" }}>
@@ -577,7 +628,6 @@ export default function GiftResult() {
           </p>
 
           <div className="flex items-center justify-between flex-wrap gap-3 pb-6 border-b border-[#F6F3F0]">
-            {/* ✅ Only show tabs with products */}
             <div className="flex gap-2 overflow-x-auto flex-nowrap pb-1">
               {visibleCats.map(([val, label]) => {
                 const count    = val === "all" ? results.length : (catCounts[val] || 0);
@@ -612,7 +662,6 @@ export default function GiftResult() {
               </button>
               <button onClick={handleSaveSearch}
                 className="px-[18px] py-[9px] rounded-full font-bold text-[0.82rem] border-none cursor-pointer transition-all duration-200"
-
                 style={{ background: saveButtonConfig.bg, color: saveButtonConfig.color, fontFamily: "'Syne',sans-serif",
                  animation: saveState === "confirming" ? "savePulse 1s ease-in-out infinite" : "none" }}>
                 {saveButtonConfig.label}
